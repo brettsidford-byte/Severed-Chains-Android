@@ -14,6 +14,7 @@ import java.util.Locale;
  */
 public final class AndroidDiscReader {
     private static final int PVD_SECTOR = 16;
+    private static final int SYNC_PATTERN_SIZE = 12;
     private static final int PVD_DATA_SIZE = 0x800;
 
     private AndroidDiscReader() {
@@ -26,12 +27,22 @@ public final class AndroidDiscReader {
         }
 
         final byte[] sector = new byte[PVD_DATA_SIZE];
-        try (IsoReader reader = new IsoReader(file.toPath())) {
+        IsoReader reader = null;
+        try {
+            reader = new IsoReader(file.toPath());
             reader.seekSector(PVD_SECTOR);
-            reader.advance(IsoReader.SYNC_PATTERN_SIZE);
+            reader.advance(SYNC_PATTERN_SIZE);
             reader.read(sector);
         } catch (IOException exception) {
             return null;
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ignored) {
+                    // The read result is already invalid if closing failed here.
+                }
+            }
         }
 
         if (sector[0] != 1

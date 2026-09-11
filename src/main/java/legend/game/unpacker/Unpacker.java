@@ -290,7 +290,7 @@ public final class Unpacker {
 
         final long writeTime = System.nanoTime();
 
-        final ExecutorService executor = Executors.newCachedThreadPool();
+        final ExecutorService writeExecutor = Executors.newCachedThreadPool();
         try {
           final AtomicInteger remaining = new AtomicInteger(all.size());
 
@@ -310,7 +310,7 @@ public final class Unpacker {
             });
           }
         } finally {
-          shutdownExecutor(executor);
+          shutdownExecutor(writeExecutor);
         }
 
         LOGGER.info("Files written in %fs", (System.nanoTime() - writeTime) / 1_000_000_000.0f);

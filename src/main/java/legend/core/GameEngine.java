@@ -13,7 +13,7 @@ import legend.core.gte.Gte;
 import legend.core.gte.MV;
 import legend.core.lang.I18nText;
 import legend.core.platform.PlatformManager;
-import legend.core.platform.SdlPlatformManager;
+import legend.core.platform.PlatformManagerFactory;
 import legend.core.platform.WindowEvents;
 import legend.core.platform.input.InputBindings;
 import legend.core.renderer.Obj;
@@ -101,7 +101,7 @@ public final class GameEngine {
   public static final ConfigCollection CONFIG = new ConfigCollection();
   public static final SaveManager SAVES = new SaveManager(SaveVersion.V10, V10Serializer::toV10);
 
-  public static final PlatformManager PLATFORM = new SdlPlatformManager();
+  public static final PlatformManager PLATFORM = PlatformManagerFactory.create();
   public static final RenderEngine RENDERER = new RenderEngine();
 
   public static final FontManager FONTS = new FontManager();

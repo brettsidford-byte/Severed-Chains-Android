@@ -38,6 +38,18 @@ public final class AndroidGlesResources {
         return program;
     }
 
+    public static int uniformBlockIndex(final int program, final String blockName) {
+        return GLES30.glGetUniformBlockIndex(program, blockName);
+    }
+
+    public static boolean bindUniformBlock(final int program, final String blockName,
+                                           final int binding) {
+        final int index = uniformBlockIndex(program, blockName);
+        if (index == GLES30.GL_INVALID_INDEX) return false;
+        GLES30.glUniformBlockBinding(program, index, binding);
+        return true;
+    }
+
     public static void deleteProgram(final int program) {
         if (program != 0) GLES30.glDeleteProgram(program);
     }

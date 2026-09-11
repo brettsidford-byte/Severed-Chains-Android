@@ -223,3 +223,10 @@
 - Android now checks the marker after extraction and automatically retries once using the enabled low-memory path.
 - Corrected extraction status messages to use real line breaks and to distinguish completed extraction from an incomplete pass.
 - Build/test: CI validation pending; device retest required.
+
+
+## 2026-09-11 — extraction retry build identification
+
+- Bumped the Android version to 0.8.0 and added a visible build label to the status screen.
+- This makes it possible to confirm that the replacement APK has actually updated the installed application before testing extraction.
+- Build/test: CI validation pending.

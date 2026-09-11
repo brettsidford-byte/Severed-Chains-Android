@@ -3,12 +3,22 @@ plugins {
 }
 
 val sharedGamePathsDir = layout.buildDirectory.dir("generated/sharedGamePaths")
+val sharedIsoReaderDir = layout.buildDirectory.dir("generated/sharedIsoReader")
 
 val copySharedGamePaths = tasks.register("copySharedGamePaths") {
     doLast {
         copy {
             from("../../src/main/java/legend/core/GamePaths.java")
             into(sharedGamePathsDir.get().asFile.resolve("legend/core"))
+        }
+    }
+}
+
+val copySharedIsoReader = tasks.register("copySharedIsoReader") {
+    doLast {
+        copy {
+            from("../../src/main/java/legend/game/unpacker/IsoReader.java")
+            into(sharedIsoReaderDir.get().asFile.resolve("legend/game/unpacker"))
         }
     }
 }
@@ -38,7 +48,7 @@ android {
 
     sourceSets {
         getByName("main") {
-            java.srcDirs("src/main/java", sharedGamePathsDir)
+            java.srcDirs("src/main/java", sharedGamePathsDir, sharedIsoReaderDir)
         }
     }
 
@@ -50,4 +60,5 @@ android {
 
 tasks.named("preBuild") {
     dependsOn(copySharedGamePaths)
+    dependsOn(copySharedIsoReader)
 }

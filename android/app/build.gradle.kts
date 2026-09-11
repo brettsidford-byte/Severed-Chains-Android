@@ -8,6 +8,7 @@ val sharedFileDataDir = layout.buildDirectory.dir("generated/sharedFileData")
 val sharedFileDataSupportDir = layout.buildDirectory.dir("generated/sharedFileDataSupport")
 val sharedUnpackerStructureDir = layout.buildDirectory.dir("generated/sharedUnpackerStructure")
 val sharedUnpackerOrchestrationDir = layout.buildDirectory.dir("generated/sharedUnpackerOrchestration")
+val sharedShaderAssetsDir = layout.buildDirectory.dir("generated/sharedShaderAssets")
 
 val copySharedGamePaths = tasks.register("copySharedGamePaths") {
     doLast {
@@ -89,6 +90,15 @@ val copySharedUnpackerOrchestration = tasks.register("copySharedUnpackerOrchestr
     }
 }
 
+val copySharedShaderAssets = tasks.register("copySharedShaderAssets") {
+    doLast {
+        copy {
+            from("../../gfx/shaders")
+            into(sharedShaderAssetsDir.get().asFile.resolve("gfx/shaders"))
+        }
+    }
+}
+
 android {
     namespace = "legend.severedchains.android"
     compileSdk = 35
@@ -129,6 +139,7 @@ android {
                 sharedUnpackerStructureDir,
                 sharedUnpackerOrchestrationDir
             )
+            assets.srcDirs(sharedShaderAssetsDir)
         }
     }
 
@@ -152,4 +163,5 @@ tasks.named("preBuild") {
     dependsOn(copySharedFileDataSupport)
     dependsOn(copySharedUnpackerStructure)
     dependsOn(copySharedUnpackerOrchestration)
+    dependsOn(copySharedShaderAssets)
 }

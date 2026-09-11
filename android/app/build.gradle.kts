@@ -7,6 +7,7 @@ val sharedIsoReaderDir = layout.buildDirectory.dir("generated/sharedIsoReader")
 val sharedFileDataDir = layout.buildDirectory.dir("generated/sharedFileData")
 val sharedFileDataSupportDir = layout.buildDirectory.dir("generated/sharedFileDataSupport")
 val sharedUnpackerStructureDir = layout.buildDirectory.dir("generated/sharedUnpackerStructure")
+val sharedUnpackerOrchestrationDir = layout.buildDirectory.dir("generated/sharedUnpackerOrchestration")
 
 val copySharedGamePaths = tasks.register("copySharedGamePaths") {
     doLast {
@@ -73,6 +74,21 @@ val copySharedUnpackerStructure = tasks.register("copySharedUnpackerStructure") 
     }
 }
 
+val copySharedUnpackerOrchestration = tasks.register("copySharedUnpackerOrchestration") {
+    doLast {
+        copy {
+            from(
+                "../../src/main/java/legend/game/unpacker/Transformations.java",
+                "../../src/main/java/legend/game/unpacker/LeafTransformation.java",
+                "../../src/main/java/legend/game/unpacker/BranchTransformation.java",
+                "../../src/main/java/legend/game/unpacker/Replacement.java",
+                "../../src/main/java/legend/game/unpacker/Unpacker.java"
+            )
+            into(sharedUnpackerOrchestrationDir.get().asFile.resolve("legend/game/unpacker"))
+        }
+    }
+}
+
 android {
     namespace = "legend.severedchains.android"
     compileSdk = 35
@@ -81,8 +97,8 @@ android {
         applicationId = "legend.severedchains.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.6.0-unpacker-structure"
+        versionCode = 7
+        versionName = "0.7.0-unpacker-orchestration"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -110,7 +126,8 @@ android {
                 sharedIsoReaderDir,
                 sharedFileDataDir,
                 sharedFileDataSupportDir,
-                sharedUnpackerStructureDir
+                sharedUnpackerStructureDir,
+                sharedUnpackerOrchestrationDir
             )
         }
     }
@@ -124,6 +141,8 @@ android {
 dependencies {
     implementation("org.joml:joml:1.10.8")
     implementation("com.google.code.findbugs:jsr305:3.0.2")
+    implementation("org.apache.logging.log4j:log4j-api:2.26.1")
+    implementation("org.apache.logging.log4j:log4j-core:2.26.1")
 }
 
 tasks.named("preBuild") {
@@ -132,4 +151,5 @@ tasks.named("preBuild") {
     dependsOn(copySharedFileData)
     dependsOn(copySharedFileDataSupport)
     dependsOn(copySharedUnpackerStructure)
+    dependsOn(copySharedUnpackerOrchestration)
 }

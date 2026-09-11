@@ -61,10 +61,21 @@ public final class AndroidExtractedTmdMeshProbe {
             final boolean lit = (primitiveId & 0x1) == 0;
             final int primitiveVertices = quad ? 4 : 3;
             final int[] vertexIndices = new int[primitiveVertices];
+            final int[] u = new int[primitiveVertices];
+            final int[] v = new int[primitiveVertices];
+            int clut = 0;
+            int tpage = 0;
             int read = packetOffset;
 
             if (textured) {
-                read += primitiveVertices * 4;
+                for (int i = 0; i < primitiveVertices; i++) {
+                    u[i] = data.get(read) & 0xff;
+                    v[i] = data.get(read + 1) & 0xff;
+                    final int pageOrClut = data.getShort(read + 2) & 0xffff;
+                    if (i == 0) clut = pageOrClut;
+                    if (i == 1) tpage = pageOrClut;
+                    read += 4;
+                }
             }
             if (gradated || !lit) {
                 read += primitiveVertices * 4;
@@ -109,8 +120,8 @@ public final class AndroidExtractedTmdMeshProbe {
                 vertices[offset + 4] = 0.0f;
                 vertices[offset + 5] = 0.0f;
                 vertices[offset + 6] = 1.0f;
-                vertices[offset + 7] = 0.0f;
-                vertices[offset + 8] = 0.0f;
+                vertices[offset + 7] = u[i] / 256.0f;
+                vertices[offset + 8] = v[i] / 256.0f;
                 vertices[offset + 9] = 0.0f;
                 vertices[offset + 10] = 0.0f;
                 vertices[offset + 11] = 1.0f;
@@ -148,7 +159,9 @@ public final class AndroidExtractedTmdMeshProbe {
             mesh.draw();
 
             final boolean submitted = GLES30.glGetError() == GLES30.GL_NO_ERROR;
-            Log.i(TAG, "Extracted TMD mesh submitted: " + tmdPath + ", vertices=" + vertexCount);
+            Log.i(TAG, "Extracted TMD mesh submitted: " + tmdPath + ", vertices=" + vertexCount
+                + ", primitive=0x" + Integer.toHexString(header)
+                + ", textured=" + textured + ", tpage=" + tpage + ", clut=" + clut);
             mesh.destroy();
             uniforms.destroy();
             shader.delete();

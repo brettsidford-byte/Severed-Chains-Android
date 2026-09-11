@@ -291,7 +291,8 @@ public final class Unpacker {
 
         final long writeTime = System.nanoTime();
 
-        try(final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+        final ExecutorService executor = Executors.newCachedThreadPool();
+        try {
           final AtomicInteger remaining = new AtomicInteger(all.size());
 
           executor.execute(() -> {

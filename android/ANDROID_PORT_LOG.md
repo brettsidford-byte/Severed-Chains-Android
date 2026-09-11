@@ -49,3 +49,12 @@
 - No duplicate extraction or transformation code was added.
 - Build result: GitHub Actions runs 63 and 64 succeeded.
 - The full upstream unpacker remains to be included with its dependency graph before extraction can execute on Android.
+
+
+## 2026-09-11 — upstream IsoReader integration boundary
+
+- Attempted to include the complete upstream unpacker package; compilation exposed dependencies on core GPU/math, game, audio, logging, and third-party classes.
+- Reverted that broad inclusion to preserve a green APK.
+- Included the actual upstream `IsoReader` class in the Android source set and routed Android disc preflight through it.
+- Build result: GitHub Actions run 70 succeeded.
+- Remaining extraction work is to port/include the unpacker's dependency graph, not to write a replacement extractor.

@@ -19,6 +19,7 @@ public final class SeveredChainsSurfaceView extends GLSurfaceView {
     private final StatusRenderer renderer;
     private final AndroidInputState input = new AndroidInputState();
     private final AndroidEngineRenderBridge engineBridge = new AndroidEngineRenderBridge();
+    private final AndroidEngineHost engineHost = new AndroidEngineHost();
 
     public SeveredChainsSurfaceView(final Context context) {
         super(context);
@@ -71,6 +72,15 @@ public final class SeveredChainsSurfaceView extends GLSurfaceView {
         return super.onGenericMotionEvent(event);
     }
 
+    public void startEngine() {
+        engineHost.requestStart();
+        renderer.setLastInput(engineHost.describe());
+    }
+
+    public String engineStatus() {
+        return engineHost.describe();
+    }
+
     public AndroidEngineRenderBridge engineBridge() {
         return engineBridge;
     }
@@ -96,6 +106,7 @@ public final class SeveredChainsSurfaceView extends GLSurfaceView {
         public void onSurfaceCreated(final GL10 gl, final EGLConfig config) {
             GLES30.glClearColor(0.02f, 0.02f, 0.02f, 1.0f);
             engineBridge.onSurfaceCreated();
+            engineHost.onSurfaceCreated(getContext().getAssets());
             Log.i(TAG, "GLES surface created: version="
                 + GLES30.glGetString(GLES30.GL_VERSION)
                 + ", renderer=" + GLES30.glGetString(GLES30.GL_RENDERER)
@@ -118,6 +129,7 @@ public final class SeveredChainsSurfaceView extends GLSurfaceView {
 
         @Override
         public void onDrawFrame(final GL10 gl) {
+            engineHost.onFrame();
             engineBridge.onDrawFrame();
             // Keep input transitions frame-local for the future engine adapter.
             input.clearPressed();

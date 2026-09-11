@@ -306,3 +306,9 @@
 - Desktop cached-pool behavior and logging remain unchanged; Android-only diagnostics are enabled only when low-memory unpacking is active.
 - This is intended to identify the exact file or transformer behind the RG405V transformation stall.
 - Build/test: source change made; CI/device validation pending.
+
+## 2026-09-11 — tolerate absent Chester replacement targets
+
+- The RG405V reached the upstream Chester texture replacement with a missing `260/textures/4` node and crashed with a `NullPointerException`.
+- The replacement now checks each archive path before replacing it and logs a skip when the target is absent; normal replacement behaviour is unchanged when the target exists.
+- Build/test: CI validation pending; RG405V retest required.

@@ -897,15 +897,28 @@ public final class Unpacker {
       final PathNode drgn22 = sect.children.get("DRGN22.BIN");
 
       if(drgn21 != null) {
-        transformations.replaceWithFile(drgn21.children.get("260").children.get("textures").children.get("4"), REPLACEMENTS.resolve("chester.tim"));
+        replaceChesterTextureIfPresent(drgn21, transformations);
       }
 
       if(drgn22 != null) {
-        transformations.replaceWithFile(drgn22.children.get("260").children.get("textures").children.get("4"), REPLACEMENTS.resolve("chester.tim"));
+        replaceChesterTextureIfPresent(drgn22, transformations);
       }
 
 
     }
+  }
+
+  private static void replaceChesterTextureIfPresent(final PathNode archive, final Transformations transformations) {
+    final PathNode chapter = archive.children.get("260");
+    final PathNode textures = chapter == null ? null : chapter.children.get("textures");
+    final PathNode texture = textures == null ? null : textures.children.get("4");
+
+    if(texture == null) {
+      LOGGER.info("Skipping Chester texture replacement; target path is absent below %s", archive.fullPath);
+      return;
+    }
+
+    transformations.replaceWithFile(texture, REPLACEMENTS.resolve("chester.tim"));
   }
 
   /**

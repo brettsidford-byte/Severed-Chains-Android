@@ -119,7 +119,6 @@ public final class MainActivity extends Activity {
                         + GameDataInspector.inspect(gameDataStore.getImportedFiles()));
                     select.setEnabled(true);
                     updateExtractionButton();
-                    updateExtractionButton();
                 });
             } catch (final IOException exception) {
                 Log.e(TAG, "Game-data import failed", exception);

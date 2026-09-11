@@ -207,3 +207,11 @@
 - Kept the VRAM source data in PS1 format and expand only the region intended for GLES upload.
 - This is the data boundary needed before a real textured TMD can be drawn; it is not yet connected to the live game GPU command stream.
 - Build/test: CI validation pending.
+
+
+## 2026-09-11 — rebind unpacker output on Android
+
+- Fixed a path-initialisation issue where the upstream unpacker's static output root could be captured before Android configured `GamePaths`.
+- The unpacker now rebinds its output and replacement paths at the start of each extraction.
+- This ensures the completion marker and extracted files are written under the same Android app-private root used by the readiness check.
+- Build/test: CI validation pending; device retest required.

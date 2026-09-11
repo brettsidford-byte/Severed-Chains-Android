@@ -145,6 +145,11 @@ public final class Unpacker {
   }
 
   public static void unpack() throws UnpackerException {
+    // Android configures GamePaths after application startup. Rebind these
+    // static output paths here so extraction always follows the active root.
+    ROOT = GamePaths.files();
+    REPLACEMENTS = GamePaths.patches().resolve("replacements");
+
     try {
       Files.createDirectories(ROOT);
       Files.createDirectories(GamePaths.isos());

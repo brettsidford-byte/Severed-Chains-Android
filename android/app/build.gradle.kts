@@ -80,6 +80,12 @@ android {
         }
     }
 
+    packaging {
+        resources {
+            excludes += "/META-INF/DEPENDENCIES"
+        }
+    }
+
     sourceSets {
         getByName("main") {
             java.srcDirs(
@@ -100,7 +106,6 @@ android {
 
 dependencies {
     implementation("org.joml:joml:1.10.8")
-    implementation("org.legendofdragoon:mod-loader:4.3.3")
     implementation("com.google.code.findbugs:jsr305:3.0.2")
 }
 

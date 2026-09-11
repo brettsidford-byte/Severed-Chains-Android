@@ -3,6 +3,7 @@ package legend.severedchains.android;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.util.List;
 
 public final class MainActivity extends Activity {
+    private static final String TAG = "SeveredChains";
     private static final int SELECT_GAME_DATA = 1001;
 
     private GameDataStore gameDataStore;
@@ -24,6 +26,7 @@ public final class MainActivity extends Activity {
         super.onCreate(state);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         gameDataStore = new GameDataStore(this);
+        Log.i(TAG, "Android probe starting; storage root=" + new AndroidStoragePaths(this).root());
 
         final FrameLayout root = new FrameLayout(this);
         root.addView(new SeveredChainsSurfaceView(this));
@@ -70,10 +73,11 @@ public final class MainActivity extends Activity {
         }
         try {
             final List<java.io.File> imported = gameDataStore.importDocuments(data);
-            status.setText(gameDataStore.getImportedFileCount()
-                + " game-data file(s) available\n"
-                + imported.size() + " imported in this selection");
+            Log.i(TAG, "Imported " + imported.size() + " selected file(s); total available="
+                + gameDataStore.getImportedFileCount());
+            status.setText(gameDataStore.getImportSummary());
         } catch (final IOException exception) {
+            Log.e(TAG, "Game-data import failed", exception);
             status.setText("Game-data import failed: " + exception.getMessage());
         }
     }
@@ -81,7 +85,7 @@ public final class MainActivity extends Activity {
     private void updateStatus() {
         final int count = gameDataStore.getImportedFileCount();
         if (count > 0) {
-            status.setText(count + " game-data file(s) available\nOpenGL ES 3 surface active");
+            status.setText(gameDataStore.getImportSummary() + "\nOpenGL ES 3 surface active");
         } else {
             status.setText("Select all four ISO files\nOpenGL ES 3 surface active");
         }

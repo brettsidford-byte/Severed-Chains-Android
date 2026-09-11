@@ -38,6 +38,10 @@ public final class AndroidGlesResources {
         return program;
     }
 
+    public static void deleteProgram(final int program) {
+        if (program != 0) GLES30.glDeleteProgram(program);
+    }
+
     public static int createRgbaTexture(final ByteBuffer pixels, final int width, final int height,
                                         final boolean linearFiltering) {
         final int[] handles = new int[1];

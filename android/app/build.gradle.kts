@@ -28,8 +28,10 @@ android {
     sourceSets {
         getByName("main") {
             java.srcDirs("../../src/main/java")
-            java.include("legend/severedchains/android/**")
-            java.include("legend/core/GamePaths.java")
+            java.setIncludes(setOf(
+                "legend/severedchains/android/**",
+                "legend/core/GamePaths.java"
+            ))
         }
     }
 

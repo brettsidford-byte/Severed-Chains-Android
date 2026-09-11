@@ -15,17 +15,15 @@ import java.io.IOException;
 import java.util.List;
 
 import legend.core.GamePaths;
-import legend.game.unpacker.Unpacker;
 
 public final class MainActivity extends Activity {
     private static final String TAG = "SeveredChains";
-    private static final String BUILD_LABEL = "Android build 0.8.0 extraction-retry";
+    private static final String BUILD_LABEL = "Android build 0.9.0 atomic ISO import";
     private static final int SELECT_GAME_DATA = 1001;
 
     private GameDataStore gameDataStore;
     private TextView status;
     private Button select;
-    private Button extract;
     private SeveredChainsSurfaceView surface;
 
     @Override
@@ -124,12 +122,12 @@ public final class MainActivity extends Activity {
         final int count = gameDataStore.getImportedFileCount();
         if (count > 0) {
             status.setText(BUILD_LABEL + "\n" + gameDataStore.getImportSummary() + "\n"
-                + GameDataInspector.inspect(gameDataStore.getImportedFiles())
-                + "\n" + AndroidEngineSession.describe());
+                + "ISO directory: " + gameDataStore.getDataDirectory() + "\n"
+                + "Severed Chains startup will use these files\n"
+                + GameDataInspector.inspect(gameDataStore.getImportedFiles()));
         } else {
-            status.setText(BUILD_LABEL + "\nSelect all four ISO files\nOpenGL ES 3 surface active");
+            status.setText(BUILD_LABEL + "\nSelect the four ISO files\nOpenGL ES 3 surface active");
         }
-        updateExtractionButton();
     }
 
     private void hideSystemUi() {

@@ -37,27 +37,73 @@ public final class AndroidExtractedTmdMeshProbe {
             final int objectBase = 8;
             final int vertexOffset = objectBase + data.getInt(objectBase);
             final int vertexCount = data.getInt(objectBase + 4);
-            if (vertexCount < 3 || vertexOffset < 0 || vertexOffset + 24 > bytes.length) {
+            final int primitiveOffset = objectBase + data.getInt(objectBase + 16);
+            final int primitiveCount = data.getInt(objectBase + 20);
+            if (vertexCount < 3 || primitiveCount < 1 || vertexOffset < 0
+                || vertexOffset + 24 > bytes.length || primitiveOffset < 0
+                || primitiveOffset + 4 > bytes.length) {
                 return "extracted TMD mesh: unsupported header";
             }
 
-            final short[] x = new short[3];
-            final short[] y = new short[3];
-            final short[] z = new short[3];
+            final int header = data.getInt(primitiveOffset);
+            final int packetCount = header & 0xffff;
+            final int packetSize = primitivePacketSize(header);
+            final int packetOffset = primitiveOffset + 4;
+            if (packetCount < 1 || packetOffset + packetSize > bytes.length) {
+                return "extracted TMD mesh: unsupported primitive";
+            }
+
+            final int primitiveId = header >>> 24;
+            final boolean gradated = (header & 0x0004_0000) != 0;
+            final boolean normals = (header & 0x0001_0000) == 0;
+            final boolean quad = (primitiveId & 0x8) != 0;
+            final boolean textured = (primitiveId & 0x4) != 0;
+            final boolean lit = (primitiveId & 0x1) == 0;
+            final int primitiveVertices = quad ? 4 : 3;
+            final int[] vertexIndices = new int[primitiveVertices];
+            int read = packetOffset;
+
+            if (textured) {
+                read += primitiveVertices * 4;
+            }
+            if (gradated || !lit) {
+                read += primitiveVertices * 4;
+            } else if (!textured) {
+                read += 4;
+            }
+
+            for (int i = 0; i < primitiveVertices; i++) {
+                if (lit && normals) read += 2;
+                if (read + 2 > packetOffset + packetSize) {
+                    return "extracted TMD mesh: truncated primitive";
+                }
+                vertexIndices[i] = data.getShort(read) & 0xffff;
+                read += 2;
+            }
+
+            final float[] rawX = new float[3];
+            final float[] rawY = new float[3];
+            final float[] rawZ = new float[3];
             float scale = 1.0f;
             for (int i = 0; i < 3; i++) {
-                final int offset = vertexOffset + i * 8;
-                x[i] = data.getShort(offset);
-                y[i] = data.getShort(offset + 2);
-                z[i] = data.getShort(offset + 4);
-                scale = Math.max(scale, Math.max(Math.abs(x[i]), Math.max(Math.abs(y[i]), Math.abs(z[i]))));
+                final int vertexIndex = vertexIndices[i];
+                if (vertexIndex >= vertexCount
+                    || vertexOffset + vertexIndex * 8 + 6 >= bytes.length) {
+                    return "extracted TMD mesh: invalid vertex index";
+                }
+                final int offset = vertexOffset + vertexIndex * 8;
+                rawX[i] = data.getShort(offset);
+                rawY[i] = data.getShort(offset + 2);
+                rawZ[i] = data.getShort(offset + 4);
+                scale = Math.max(scale, Math.max(Math.abs(rawX[i]),
+                    Math.max(Math.abs(rawY[i]), Math.abs(rawZ[i]))));
             }
 
             final float[] vertices = new float[3 * 16];
             for (int i = 0; i < 3; i++) {
                 final int offset = i * 16;
-                vertices[offset] = x[i] / scale * 0.7f;
-                vertices[offset + 1] = y[i] / scale * 0.7f;
+                vertices[offset] = rawX[i] / scale * 0.7f;
+                vertices[offset + 1] = rawY[i] / scale * 0.7f;
                 vertices[offset + 2] = 0.0f;
                 vertices[offset + 3] = 1.0f;
                 vertices[offset + 4] = 0.0f;
@@ -129,4 +175,25 @@ public final class AndroidExtractedTmdMeshProbe {
         final int location = shader.uniform(name);
         if (location >= 0) GLES30.glUniform3f(location, x, y, z);
     }
+    private static int primitivePacketSize(final int command) {
+        final int primitiveId = command >>> 24;
+        final boolean gradated = (command & 0x0004_0000) != 0;
+        final boolean normals = (command & 0x0001_0000) == 0;
+        final boolean shaded = (primitiveId & 0x10) != 0;
+        final boolean quad = (primitiveId & 0x8) != 0;
+        final boolean textured = (primitiveId & 0x4) != 0;
+        final boolean lit = (primitiveId & 0x1) == 0;
+        if (textured && gradated || !textured && !lit) {
+            throw new IllegalArgumentException("unsupported primitive type");
+        }
+
+        final int vertexCount = quad ? 4 : 3;
+        int bytes = vertexCount * 2;
+        if (normals) bytes += (shaded ? vertexCount : 1) * 2;
+        if (gradated || !lit) bytes += vertexCount * 4;
+        else if (!textured) bytes += 4;
+        if (textured) bytes += vertexCount * 4;
+        return (bytes + 3) & ~3;
+    }
+
 }

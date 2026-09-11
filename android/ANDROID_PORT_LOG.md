@@ -283,6 +283,8 @@
 - Added a standard upstream vertex-layout path using 32-bit GLES element buffers, matching the desktop renderer's `int[]` index contract.
 - Added complete vertex-stream updates for dynamic and streaming mesh usage; existing 16-bit diagnostic mesh paths remain unchanged.
 
+2026-09-11: Added Android mesh primitive-mode and indexed-range draw operations with bounds checks, preparing the adapter for upstream line, strip, and partial-batch rendering.
+
 ## 2026-09-11 — Android GLES framebuffer binding safety
 
 - The framebuffer adapter now restores the previously bound framebuffer after creation instead of forcing the default target.

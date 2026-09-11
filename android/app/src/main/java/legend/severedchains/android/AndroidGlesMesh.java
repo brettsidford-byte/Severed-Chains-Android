@@ -223,9 +223,25 @@ public final class AndroidGlesMesh {
     }
 
     public void draw() {
+        draw(GLES30.GL_TRIANGLES);
+    }
+
+    public void draw(final int primitiveMode) {
         GLES30.glBindVertexArray(vao);
-        GLES30.glDrawElements(GLES30.GL_TRIANGLES, indexCount,
+        GLES30.glDrawElements(primitiveMode, indexCount,
             intIndices ? GLES30.GL_UNSIGNED_INT : GLES30.GL_UNSIGNED_SHORT, 0);
+        GLES30.glBindVertexArray(0);
+    }
+
+    /** Draws a contiguous indexed range using the upstream primitive mode. */
+    public void drawRange(final int primitiveMode, final int start, final int count) {
+        if (start < 0 || count < 0 || start + count > indexCount) {
+            throw new IllegalArgumentException("Mesh draw range is outside the index buffer");
+        }
+        GLES30.glBindVertexArray(vao);
+        final int offset = start * (intIndices ? Integer.BYTES : Short.BYTES);
+        GLES30.glDrawElements(primitiveMode, count,
+            intIndices ? GLES30.GL_UNSIGNED_INT : GLES30.GL_UNSIGNED_SHORT, offset);
         GLES30.glBindVertexArray(0);
     }
 

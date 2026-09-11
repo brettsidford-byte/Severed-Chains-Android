@@ -256,3 +256,12 @@
 - This replaces the desktop window-loop assumption at the lifecycle boundary and provides the frame timing/input point for the future game-state update.
 - Extracted geometry still uses the diagnostic submission path; the normal Severed Chains engine/render graph is not yet connected.
 - Build/test: CI validation pending.
+
+
+## 2026-09-11 — stream ISO members in Android low-memory mode
+
+- ADB confirmed a 192 MiB Android heap limit and repeated ~37 MiB allocation failures during extraction.
+- Found that the previous low-memory path still called `IsoReader.readSectors()`, allocating each complete ISO member before writing it to disk.
+- Added sector-by-sector streaming directly to temporary files and returned `FileBackedFileData` over those files.
+- This keeps the extraction working set near one 2352-byte sector plus transformer buffers instead of a whole member byte array.
+- Build/test: CI validation pending; RG405V retest required.

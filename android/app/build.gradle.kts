@@ -2,6 +2,16 @@ plugins {
     id("com.android.application")
 }
 
+val sharedGamePathsDir = layout.buildDirectory.dir("generated/sharedGamePaths")
+val copySharedGamePaths = tasks.register("copySharedGamePaths") {
+    doLast {
+        copy {
+            from("../../src/main/java/legend/core/GamePaths.java")
+            into(sharedGamePathsDir.get().asFile.resolve("legend/core"))
+        }
+    }
+}
+
 android {
     namespace = "legend.severedchains.android"
     compileSdk = 35
@@ -27,11 +37,7 @@ android {
 
     sourceSets {
         getByName("main") {
-            java.srcDirs("../../src/main/java")
-            java.setIncludes(setOf(
-                "legend/severedchains/android/**",
-                "legend/core/GamePaths.java"
-            ))
+            java.srcDirs("src/main/java", sharedGamePathsDir)
         }
     }
 
@@ -39,4 +45,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+}
+
+tasks.named("preBuild") {
+    dependsOn(copySharedGamePaths)
 }

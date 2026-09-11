@@ -63,11 +63,15 @@ public final class AndroidPsxVram {
      * carried by a textured primitive.
      */
     public int getTexel(final int pageX, final int pageY, final int u, final int v,
-                        final int widthDivisor, final int indexShift, final int indexMask,
+                        final int widthDivisor, final int widthMask, final int indexShift, final int indexMask,
                         final int clutX, final int clutY) {
-        final int packedCoordinate = pageX + (u >>> indexShift) / widthDivisor;
-        final int paletteIndex = this.pixels[(pageY + v) * WIDTH + packedCoordinate] & indexMask;
-        return this.pixels[(clutY * WIDTH + clutX + paletteIndex)] & 0xffff;
+        final int packedX = pageX + u / widthDivisor;
+        final int packed = this.pixels[(pageY + v) * WIDTH + packedX] & 0xffff;
+        if (indexMask == 0) {
+            return packed;
+        }
+        final int paletteIndex = packed >>> ((u & widthMask) * indexShift) & indexMask;
+        return this.pixels[clutY * WIDTH + clutX + paletteIndex] & 0xffff;
     }
 
     public static void putRgba(final ByteBuffer output, final int pixel) {

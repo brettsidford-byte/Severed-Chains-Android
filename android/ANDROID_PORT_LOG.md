@@ -93,3 +93,11 @@
 - Routed the existing GLES proof backend and engine render bridge through that contract.
 - Kept the current GLES 3 proof output unchanged while removing direct backend ownership from the bridge.
 - Build/test: CI validation pending; this remains a renderer-platform step and does not yet connect the full Severed Chains `RenderApi`.
+
+
+## 2026-09-11 — GLES shader and texture resource boundary
+
+- Added Android GLES resource helpers for shader-program compilation/linking and RGBA texture upload, filtering, wrapping, and deletion.
+- Refactored the proof renderer to use the shared Android shader-program path.
+- Texture upload is available for the next texture-backed draw pass; no game asset is bundled or altered.
+- Build/test: CI validation pending.

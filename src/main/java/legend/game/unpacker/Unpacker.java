@@ -227,7 +227,7 @@ public final class Unpacker {
 
         final AtomicReference<Throwable> transformationThrowable = new AtomicReference<>();
 
-        final ExecutorService executor = Executors.newCachedThreadPool();
+        final ExecutorService executor = createUnpackerExecutor();
         try {
           executor.execute(() -> {
             while(!transformations.isEmpty() && transformationThrowable.get() == null) {
@@ -296,7 +296,7 @@ public final class Unpacker {
 
         final long writeTime = System.nanoTime();
 
-        final ExecutorService writeExecutor = Executors.newCachedThreadPool();
+        final ExecutorService writeExecutor = createUnpackerExecutor();
         try {
           final AtomicInteger remaining = new AtomicInteger(all.size());
 
@@ -345,6 +345,17 @@ public final class Unpacker {
     }
   }
 
+
+  private static ExecutorService createUnpackerExecutor() {
+    if (Config.lowMemoryUnpacker()) {
+      // Android handhelds have a small heap and a slow shared filesystem. A
+      // cached pool can create thousands of workers while FileBackedFileData
+      // serialises access to each RandomAccessFile. Keep the low-memory path
+      // bounded; desktop behaviour remains unchanged.
+      return Executors.newFixedThreadPool(2);
+    }
+    return Executors.newCachedThreadPool();
+  }
 
   private static void shutdownExecutor(final ExecutorService executor) {
     executor.shutdown();

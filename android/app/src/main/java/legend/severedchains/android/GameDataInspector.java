@@ -24,7 +24,7 @@ public final class GameDataInspector {
         final StringBuilder result = new StringBuilder("Disc recognition: ");
         int recognised = 0;
         for (final File file : files) {
-            final String id = findDiscId(file);
+            final String id = identify(file);
             if (id == null) {
                 result.append("\n").append(file.getName()).append(": unrecognised");
             } else {
@@ -42,7 +42,7 @@ public final class GameDataInspector {
         return result.toString();
     }
 
-    private static String findDiscId(final File file) {
+    public static String identify(final File file) {
         if (!file.isFile()) return null;
         try (RandomAccessFile input = new RandomAccessFile(file, "r")) {
             final long length = Math.min(input.length(), SCAN_LIMIT);

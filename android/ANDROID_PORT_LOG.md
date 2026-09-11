@@ -292,3 +292,17 @@
 - The low-memory unpacker path now uses a fixed two-worker pool for transformations and file writes. Desktop cached-pool behaviour is preserved.
 - Made the file-backed data handle registry safe while worker threads are opening and closing temporary ISO members.
 - Build/test: CI validation pending; the currently running device process must be stopped before retesting.
+
+## 2026-09-11 — validate ISO readiness by upstream disc identity
+
+- Changed Android startup gating to require all four upstream Severed Chains PlayStation volume IDs, rather than counting manifest entries or arbitrary files in `isos/`.
+- Kept the Android-private `GamePaths.isos()` location and atomic import behavior unchanged.
+- This confirms the Android input seam matches the upstream program's `isos/` contract; the real `GameEngine.start()` platform integration remains a separate stage.
+- Build/test: source change made; CI/device validation pending.
+
+## 2026-09-11 — Android unpacker transformation diagnostics
+
+- Added low-memory-path diagnostics around each upstream leaf transformation, including worker path, selected transformer, elapsed time, and remaining queue count.
+- Desktop cached-pool behavior and logging remain unchanged; Android-only diagnostics are enabled only when low-memory unpacking is active.
+- This is intended to identify the exact file or transformer behind the RG405V transformation stall.
+- Build/test: source change made; CI/device validation pending.

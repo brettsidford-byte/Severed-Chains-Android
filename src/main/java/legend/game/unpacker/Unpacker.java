@@ -581,19 +581,37 @@ public final class Unpacker {
       throw new UnpackerStoppedRuntimeException("Unpacking cancelled");
     }
 
+    final long start = System.nanoTime();
+    final boolean androidDiagnostics = Config.lowMemoryUnpacker();
+    if(androidDiagnostics) {
+      LOGGER.info("Android transform start path=%s remaining=%d", node.fullPath, transformations.getRemaining());
+    }
+
     for(final var entry : transformers) {
       final var discriminator = entry.discriminator;
       final var transformer = entry.transformer;
 
       if(discriminator.matches(node, flags)) {
-//        LOGGER.info("Running %s on %s", entry.name, node.fullPath);
+        if(androidDiagnostics) {
+          LOGGER.info("Android transform selected name=%s path=%s", entry.name, node.fullPath);
+        }
         node.parent.children.remove(node.pathSegment);
         transformer.transform(node, transformations, flags);
+        if(androidDiagnostics) {
+          LOGGER.info("Android transform end name=%s path=%s elapsedMs=%d remaining=%d",
+              entry.name, node.fullPath, (System.nanoTime() - start) / 1_000_000L,
+              transformations.getRemaining());
+        }
         break;
       }
     }
 
     transformations.decrementRemaining();
+    if(androidDiagnostics) {
+      LOGGER.info("Android transform complete path=%s elapsedMs=%d remaining=%d",
+          node.fullPath, (System.nanoTime() - start) / 1_000_000L,
+          transformations.getRemaining());
+    }
   }
 
   private static String getCharacterName(final int id) {

@@ -4,6 +4,8 @@ plugins {
 
 val sharedGamePathsDir = layout.buildDirectory.dir("generated/sharedGamePaths")
 val sharedIsoReaderDir = layout.buildDirectory.dir("generated/sharedIsoReader")
+val sharedFileDataDir = layout.buildDirectory.dir("generated/sharedFileData")
+val sharedFileDataSupportDir = layout.buildDirectory.dir("generated/sharedFileDataSupport")
 
 val copySharedGamePaths = tasks.register("copySharedGamePaths") {
     doLast {
@@ -23,6 +25,38 @@ val copySharedIsoReader = tasks.register("copySharedIsoReader") {
     }
 }
 
+val copySharedFileData = tasks.register("copySharedFileData") {
+    doLast {
+        copy {
+            from(
+                "../../src/main/java/legend/game/unpacker/FileData.java",
+                "../../src/main/java/legend/game/unpacker/FileBackedFileData.java",
+                "../../src/main/java/legend/game/unpacker/ExpandableFileData.java",
+                "../../src/main/java/legend/game/unpacker/MrgArchive.java",
+                "../../src/main/java/legend/game/unpacker/DeffArchive.java"
+            )
+            into(sharedFileDataDir.get().asFile.resolve("legend/game/unpacker"))
+        }
+    }
+}
+
+val copySharedFileDataSupport = tasks.register("copySharedFileDataSupport") {
+    doLast {
+        copy {
+            from("../../src/main/java/legend/core/gpu/Rect4i.java")
+            into(sharedFileDataSupportDir.get().asFile.resolve("legend/core/gpu"))
+        }
+        copy {
+            from("../../src/main/java/legend/core/gte/MV.java")
+            into(sharedFileDataSupportDir.get().asFile.resolve("legend/core/gte"))
+        }
+        copy {
+            from("../../src/main/java/legend/core/memory/types/IntRef.java")
+            into(sharedFileDataSupportDir.get().asFile.resolve("legend/core/memory/types"))
+        }
+    }
+}
+
 android {
     namespace = "legend.severedchains.android"
     compileSdk = 35
@@ -31,8 +65,8 @@ android {
         applicationId = "legend.severedchains.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.4.0-unpacker-source"
+        versionCode = 5
+        versionName = "0.5.0-file-data"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -48,7 +82,13 @@ android {
 
     sourceSets {
         getByName("main") {
-            java.srcDirs("src/main/java", sharedGamePathsDir, sharedIsoReaderDir)
+            java.srcDirs(
+                "src/main/java",
+                sharedGamePathsDir,
+                sharedIsoReaderDir,
+                sharedFileDataDir,
+                sharedFileDataSupportDir
+            )
         }
     }
 
@@ -58,7 +98,15 @@ android {
     }
 }
 
+dependencies {
+    implementation("org.joml:joml:1.10.8")
+    implementation("org.legendofdragoon:mod-loader:4.3.3")
+    implementation("com.google.code.findbugs:jsr305:3.0.2")
+}
+
 tasks.named("preBuild") {
     dependsOn(copySharedGamePaths)
     dependsOn(copySharedIsoReader)
+    dependsOn(copySharedFileData)
+    dependsOn(copySharedFileDataSupport)
 }

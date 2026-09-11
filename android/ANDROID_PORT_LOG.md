@@ -238,3 +238,12 @@
 - Changed the Android shim to use file-backed low-memory extraction from the first pass and to retain the enabled state.
 - This avoids the desktop in-memory strategy that exceeds the RG405V application heap.
 - Build/test: CI validation pending; device retest required.
+
+
+## 2026-09-11 — Android engine lifecycle host
+
+- Added an Android-owned engine host that coordinates extracted data, GLES-surface readiness and render-thread startup state.
+- Connected the host to the GLSurfaceView lifecycle and start it automatically after successful extraction.
+- Kept the desktop `GameEngine.start()` untouched; its LWJGL/JavaFX window loop is not yet callable from Android.
+- The APK now reaches an explicit Android engine-host/render-bridge phase, preparing the next pass for real engine frame submission.
+- Build/test: CI validation pending; this is a lifecycle milestone, not yet the normal game introduction.

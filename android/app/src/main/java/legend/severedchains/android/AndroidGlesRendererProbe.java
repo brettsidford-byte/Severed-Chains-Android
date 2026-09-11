@@ -106,14 +106,14 @@ public final class AndroidGlesRendererProbe {
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, framebuffer[0]);
         GLES30.glFramebufferTexture2D(GLES30.GL_FRAMEBUFFER, GLES30.GL_COLOR_ATTACHMENT0,
             GLES30.GL_TEXTURE_2D, texture[0], 0);
-        final boolean complete = GLES30.glCheckFramebufferStatus(GLES30.GL_FRAMEBUFFER)
-            == GLES30.GL_FRAMEBUFFER_COMPLETE;
+        final int status = GLES30.glCheckFramebufferStatus(GLES30.GL_FRAMEBUFFER);
+        final boolean complete = status == GLES30.GL_FRAMEBUFFER_COMPLETE;
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
         GLES30.glDeleteTextures(1, texture, 0);
         GLES30.glDeleteFramebuffers(1, framebuffer, 0);
         if (!complete) {
             Log.e(TAG, "GLES framebuffer incomplete: 0x"
-                + Integer.toHexString(GLES30.glCheckFramebufferStatus(GLES30.GL_FRAMEBUFFER)));
+                + Integer.toHexString(status));
         }
         return complete;
     }

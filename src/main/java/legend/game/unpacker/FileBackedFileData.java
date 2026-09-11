@@ -11,18 +11,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileBackedFileData extends FileData {
-  private static final List<RandomAccessFile> closeMe = new ArrayList<>();
+  private static final List<RandomAccessFile> closeMe = java.util.Collections.synchronizedList(new ArrayList<>());
 
   public static void closeAll() {
-    for(final RandomAccessFile file : closeMe) {
-      try {
-        file.close();
-      } catch(final IOException e) {
-        e.printStackTrace();
+    synchronized(closeMe) {
+      for(final RandomAccessFile file : closeMe) {
+        try {
+          file.close();
+        } catch(final IOException e) {
+          e.printStackTrace();
+        }
       }
+      closeMe.clear();
     }
-
-    closeMe.clear();
   }
 
   private final RandomAccessFile file;

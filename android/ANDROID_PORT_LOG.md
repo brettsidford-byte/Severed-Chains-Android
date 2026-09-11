@@ -198,3 +198,12 @@
 - Added a PS1 BGR555-to-RGBA texture conversion helper for Android GLES uploads.
 - The extracted primitive still uses the untextured safety path because the unpacked VRAM source has not yet been connected to the tpage/CLUT coordinates.
 - Build/test: CI validation pending.
+
+
+## 2026-09-11 — Android PS1 VRAM boundary
+
+- Added an Android-native 1024×512 PS1 VRAM store matching the upstream GPU's 15-bit upload model.
+- Added rectangle uploads, 15-bit reads, RGBA region conversion, and page/CLUT texel addressing for 4bpp, 8bpp and direct 15-bit textures.
+- Kept the VRAM source data in PS1 format and expand only the region intended for GLES upload.
+- This is the data boundary needed before a real textured TMD can be drawn; it is not yet connected to the live game GPU command stream.
+- Build/test: CI validation pending.

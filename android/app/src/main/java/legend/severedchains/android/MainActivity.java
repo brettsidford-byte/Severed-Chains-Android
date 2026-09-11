@@ -26,8 +26,10 @@ public final class MainActivity extends Activity {
     protected void onCreate(final Bundle state) {
         super.onCreate(state);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
+        final AndroidStoragePaths storage = new AndroidStoragePaths(this);
+        System.setProperty("severed.chains.root", storage.root().getAbsolutePath());
         gameDataStore = new GameDataStore(this);
-        Log.i(TAG, "Android probe starting; storage root=" + new AndroidStoragePaths(this).root());
+        Log.i(TAG, "Android probe starting; storage root=" + storage.root());
 
         final FrameLayout root = new FrameLayout(this);
         root.addView(new SeveredChainsSurfaceView(this));

@@ -19,6 +19,7 @@ import legend.game.unpacker.Unpacker;
 
 public final class MainActivity extends Activity {
     private static final String TAG = "SeveredChains";
+    private static final String BUILD_LABEL = "Android build 0.8.0 extraction-retry";
     private static final int SELECT_GAME_DATA = 1001;
 
     private GameDataStore gameDataStore;
@@ -133,11 +134,11 @@ public final class MainActivity extends Activity {
     private void updateStatus() {
         final int count = gameDataStore.getImportedFileCount();
         if (count > 0) {
-            status.setText(gameDataStore.getImportSummary() + "\n"
+            status.setText(BUILD_LABEL + "\n" + gameDataStore.getImportSummary() + "\n"
                 + GameDataInspector.inspect(gameDataStore.getImportedFiles())
                 + "\n" + AndroidEngineSession.describe());
         } else {
-            status.setText("Select all four ISO files\nOpenGL ES 3 surface active");
+            status.setText(BUILD_LABEL + "\nSelect all four ISO files\nOpenGL ES 3 surface active");
         }
         updateExtractionButton();
     }
@@ -177,8 +178,8 @@ public final class MainActivity extends Activity {
                 final boolean extractionReady = ready;
                 runOnUiThread(() -> {
                     status.setText(extractionReady
-                        ? "Extraction completed.\n" + AndroidEngineSession.describe()
-                        : "Extraction stopped before producing its completion marker.\n"
+                        ? BUILD_LABEL + "\nExtraction completed.\n" + AndroidEngineSession.describe()
+                        : BUILD_LABEL + "\nExtraction stopped before producing its completion marker.\n"
                             + AndroidEngineSession.describe());
                     select.setEnabled(true);
                     updateExtractionButton();

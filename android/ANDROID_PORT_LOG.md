@@ -71,3 +71,5 @@
 - These classes provide the ISO directory tree, file-map output, transformation path tree, and existing error types needed by the real unpacker.
 - Build result: GitHub Actions run 80 succeeded and produced a new ARM64 debug APK.
 - The Android app still performs ISO recognition only; the complete upstream `Unpacker` remains blocked on its transformation, XA-audio, script, and game-segment dependencies.
+
+- 2026-09-11 — Added the upstream Unpacker orchestration boundary and Java-17 Android compatibility shims for status, tuple, I/O, configuration, and executor/file APIs. The first compile exposed and fixed a duplicate executor scope. CI run 92 then failed during dependency resolution with broad transient Maven lookup errors before Java compilation; retry pending. Optional portrait/CTMD/submap/audio transformer hooks remain isolated Android boundaries and are not yet full implementations.

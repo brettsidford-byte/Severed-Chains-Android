@@ -265,3 +265,12 @@
 - Added sector-by-sector streaming directly to temporary files and returned `FileBackedFileData` over those files.
 - This keeps the extraction working set near one 2352-byte sector plus transformer buffers instead of a whole member byte array.
 - Build/test: CI validation pending; RG405V retest required.
+
+
+## 2026-09-11 — atomic ISO import and normal-flow cleanup
+
+- Changed Android ISO copying to write each selected document to a temporary `.part` file, reject empty results, and move it into the final `GamePaths.isos()` directory only after the copy completes.
+- Changed the import manifest to use the same temporary-then-replace pattern, preventing a partial manifest from claiming incomplete files are ready.
+- Removed the separate extraction action from the normal Android interface. The selected ISO files are now treated as the game-data input for Severed Chains startup, matching the desktop program's expected `isos` directory flow.
+- Updated the status screen to show the final ISO directory and clarify that engine startup integration is still pending.
+- Build/test: CI validation pending; the previous RG405V build remains the last physical-device result.

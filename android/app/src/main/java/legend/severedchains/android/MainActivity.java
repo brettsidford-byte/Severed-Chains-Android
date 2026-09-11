@@ -23,6 +23,7 @@ public final class MainActivity extends Activity {
     private GameDataStore gameDataStore;
     private TextView status;
     private Button select;
+    private SeveredChainsSurfaceView surface;
 
     @Override
     protected void onCreate(final Bundle state) {
@@ -36,7 +37,8 @@ public final class MainActivity extends Activity {
             + ", shared GamePaths root=" + GamePaths.root());
 
         final FrameLayout root = new FrameLayout(this);
-        root.addView(new SeveredChainsSurfaceView(this));
+        surface = new SeveredChainsSurfaceView(this);
+        root.addView(surface);
 
         final FrameLayout controls = new FrameLayout(this);
         status = new TextView(this);
@@ -62,6 +64,21 @@ public final class MainActivity extends Activity {
             FrameLayout.LayoutParams.MATCH_PARENT));
         setContentView(root);
         hideSystemUi();
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(final android.view.KeyEvent event) {
+        if (surface != null
+            && (event.getSource() & android.view.InputDevice.SOURCE_GAMEPAD) != 0
+            && (event.getSource() & android.view.InputDevice.SOURCE_KEYBOARD) == 0) {
+            if (event.getAction() == android.view.KeyEvent.ACTION_DOWN) {
+                return surface.onKeyDown(event.getKeyCode(), event);
+            }
+            if (event.getAction() == android.view.KeyEvent.ACTION_UP) {
+                return surface.onKeyUp(event.getKeyCode(), event);
+            }
+        }
+        return super.dispatchKeyEvent(event);
     }
 
     private void selectGameData() {

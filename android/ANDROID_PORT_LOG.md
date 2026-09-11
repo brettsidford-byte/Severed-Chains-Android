@@ -247,3 +247,12 @@
 - Kept the desktop `GameEngine.start()` untouched; its LWJGL/JavaFX window loop is not yet callable from Android.
 - The APK now reaches an explicit Android engine-host/render-bridge phase, preparing the next pass for real engine frame submission.
 - Build/test: CI validation pending; this is a lifecycle milestone, not yet the normal game introduction.
+
+
+## 2026-09-11 — persistent Android game-frame path
+
+- Added an Android-owned monotonic frame clock with bounded delta time.
+- The engine host now starts and ticks this frame loop from the GLSurfaceView GL callback.
+- This replaces the desktop window-loop assumption at the lifecycle boundary and provides the frame timing/input point for the future game-state update.
+- Extracted geometry still uses the diagnostic submission path; the normal Severed Chains engine/render graph is not yet connected.
+- Build/test: CI validation pending.

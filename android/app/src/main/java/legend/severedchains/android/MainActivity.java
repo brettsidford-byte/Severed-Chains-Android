@@ -1,33 +1,87 @@
 package legend.severedchains.android;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import java.io.IOException;
+import java.util.List;
+
 public final class MainActivity extends Activity {
+    private static final int SELECT_GAME_DATA = 1001;
+
+    private GameDataStore gameDataStore;
+    private TextView status;
+
     @Override
     protected void onCreate(final Bundle state) {
         super.onCreate(state);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
+        gameDataStore = new GameDataStore(this);
 
         final FrameLayout root = new FrameLayout(this);
         root.addView(new SeveredChainsSurfaceView(this));
 
-        final TextView status = new TextView(this);
-        status.setText("Severed Chains Android\nOpenGL ES 3 surface active\nPhysical controls are being routed");
+        final FrameLayout controls = new FrameLayout(this);
+        status = new TextView(this);
         status.setTextColor(0xffffffff);
         status.setTextSize(16);
         status.setGravity(android.view.Gravity.CENTER);
-        root.addView(status, new FrameLayout.LayoutParams(
+        updateStatus();
+        controls.addView(status, new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.MATCH_PARENT));
 
+        final Button select = new Button(this);
+        select.setText("Select game data");
+        select.setOnClickListener(view -> selectGameData());
+        final FrameLayout.LayoutParams buttonParams = new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT);
+        buttonParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
+        controls.addView(select, buttonParams);
+
+        root.addView(controls, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT));
         setContentView(root);
         hideSystemUi();
+    }
+
+    private void selectGameData() {
+        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        startActivityForResult(intent, SELECT_GAME_DATA);
+    }
+
+    @Override
+    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != SELECT_GAME_DATA || resultCode != RESULT_OK || data == null) {
+            return;
+        }
+        try {
+            final List<java.io.File> imported = gameDataStore.importDocuments(data);
+            status.setText(imported.size() + " game-data file(s) imported");
+        } catch (final IOException exception) {
+            status.setText("Game-data import failed: " + exception.getMessage());
+        }
+    }
+
+    private void updateStatus() {
+        if (gameDataStore.hasImportedData()) {
+            status.setText("Game data imported\nOpenGL ES 3 surface active");
+        } else {
+            status.setText("OpenGL ES 3 surface active\nSelect your legally owned game data");
+        }
     }
 
     private void hideSystemUi() {

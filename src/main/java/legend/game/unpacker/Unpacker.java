@@ -7,7 +7,6 @@ import legend.core.GamePaths;
 import legend.core.MathHelper;
 import legend.core.Tuple;
 import legend.core.audio.xa.XaTranscoder;
-import legend.game.Scus94491BpeSegment;
 import legend.game.i18n.I18n;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -295,7 +294,7 @@ public final class Unpacker {
         try {
           final AtomicInteger remaining = new AtomicInteger(all.size());
 
-          executor.execute(() -> {
+          writeExecutor.execute(() -> {
             while(remaining.get() > 0) {
               statusListener.accept(I18n.translate("unpacker.writing_files", remaining.get()));
               DebugHelper.sleep(50);
@@ -305,7 +304,7 @@ public final class Unpacker {
           PathNode node;
           while((node = all.poll()) != null) {
             final PathNode finalNode = node;
-            executor.execute(() -> {
+            writeExecutor.execute(() -> {
               writeFile(finalNode);
               remaining.decrementAndGet();
             });
@@ -316,7 +315,7 @@ public final class Unpacker {
 
         LOGGER.info("Files written in %fs", (System.nanoTime() - writeTime) / 1_000_000_000.0f);
 
-        Files.writeString(ROOT.resolve("version"), Integer.toString(VERSION));
+        Files.write(ROOT.resolve("version"), Integer.toString(VERSION).getBytes(java.nio.charset.StandardCharsets.UTF_8));
       }
 
       statusListener.accept("");
@@ -361,7 +360,7 @@ public final class Unpacker {
       return 0;
     }
 
-    final String versionString = Files.readString(versionFile).strip();
+    final String versionString = new String(Files.readAllBytes(versionFile), java.nio.charset.StandardCharsets.UTF_8).strip();
 
     try {
       return Integer.parseInt(versionString);

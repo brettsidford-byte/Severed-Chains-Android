@@ -158,13 +158,28 @@ public final class MainActivity extends Activity {
     private void runExtraction() {
         extract.setEnabled(false);
         select.setEnabled(false);
-        status.setText("Running the existing Severed Chains extraction...\\nPlease keep the app open");
+        status.setText("Running the existing Severed Chains extraction...\nPlease keep the app open");
         Unpacker.setStatusListener(message -> runOnUiThread(() -> status.setText(message)));
         new Thread(() -> {
             try {
                 Unpacker.unpack();
+                boolean ready = AndroidEngineSession.isGameDataReady();
+                if (!ready) {
+                    runOnUiThread(() -> status.setText(
+                        "Initial extraction pass did not finish. Retrying with low-memory mode...\\n"
+                            + "Please keep the app open"));
+                    // The upstream unpacker deliberately returns after catching an
+                    // Android memory pressure event and enables its low-memory mode.
+                    // Retry in the same process so that setting takes effect.
+                    Unpacker.unpack();
+                    ready = AndroidEngineSession.isGameDataReady();
+                }
+                final boolean extractionReady = ready;
                 runOnUiThread(() -> {
-                    status.setText("Extraction completed.\\n" + AndroidEngineSession.describe());
+                    status.setText(extractionReady
+                        ? "Extraction completed.\\n" + AndroidEngineSession.describe()
+                        : "Extraction stopped before producing its completion marker.\\n"
+                            + AndroidEngineSession.describe());
                     select.setEnabled(true);
                     updateExtractionButton();
                 });

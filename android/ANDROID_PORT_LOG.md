@@ -76,3 +76,12 @@
 - 2026-09-11 — Added “Run existing Severed Chains extraction” to MainActivity. When all four recognised discs are present it calls the upstream Unpacker on the Android GamePaths root and forwards progress to the screen. Build/test: run 94 succeeded; no RG405V execution test performed in this environment.
 - 2026-09-11 — Added AndroidEngineRenderBridge and routed GLSurfaceView creation, resize, and frame callbacks through it. Build/test: run 96 succeeded. This is the renderer lifecycle seam only; the existing desktop RenderEngine still depends on LWJGL/JavaFX and is not yet running on Android.
 - 2026-09-11 — Added AndroidGlesRenderBackend proof: ES 3 shaders, indexed vertex/index buffers, vertex attributes, blending and GL-thread drawing; connected to AndroidEngineRenderBridge. Build/test: latest combined run succeeded. This validates GLES primitives only; it is not yet the Severed Chains RenderApi.
+
+
+## 2026-09-11 — upstream GLES backend dependency audit
+
+- Attempted to compile the actual upstream `legend.core.renderer.opengles` classes as the next renderer pass.
+- The source uses LWJGL OpenGLES/OpenGL bindings and the complete shared `RenderApi`/shader/uniform contract graph; Android's `android.opengl.GLES20/GLES30` APIs cannot satisfy those imports directly.
+- CI run 109 failed during Java compilation with missing `org.lwjgl.opengles` and renderer-contract classes.
+- Removed the incomplete source boundary to restore the previously working Android build.
+- The next renderer pass must add an Android-native RenderApi adapter or a deliberately scoped LWJGL-to-GLES compatibility layer; the upstream classes are retained as reference, not claimed as Android-ready.

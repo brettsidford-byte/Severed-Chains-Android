@@ -125,3 +125,12 @@
 - Updated the proof shader and mesh to sample an uploaded RGBA texture while retaining vertex colour modulation.
 - This validates the texture–shader–mesh path without bundling game assets or changing the target resolution.
 - Build/test: CI validation pending; the proof remains the only visible renderer.
+
+
+## 2026-09-11 — upstream shader asset boundary
+
+- Added the repository's real `gfx/shaders` files to the Android asset pipeline.
+- Added an Android shader-source loader that changes `#version 330 core` to `#version 300 es` while preserving the shader body.
+- Added a GL-thread probe compiling the upstream `simple.vsh` and `simple.fsh` pair after adaptation.
+- Geometry-shader assets remain excluded from this initial probe because the target GLES 3.0 context does not expose the desktop geometry stage.
+- Build/test: CI validation pending; actual shader execution still requires the full Severed Chains uniform and mesh setup.

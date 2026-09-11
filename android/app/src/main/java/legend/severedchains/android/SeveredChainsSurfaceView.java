@@ -94,6 +94,7 @@ public final class SeveredChainsSurfaceView extends GLSurfaceView {
                 + GLES30.glGetString(GLES30.GL_VERSION)
                 + ", renderer=" + GLES30.glGetString(GLES30.GL_RENDERER)
                 + ", extensions=" + GLES30.glGetString(GLES30.GL_EXTENSIONS));
+            renderer.setLastInput(AndroidGlesRendererProbe.run());
         }
 
         @Override

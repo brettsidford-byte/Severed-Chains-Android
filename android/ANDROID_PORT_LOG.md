@@ -190,3 +190,11 @@
 - Decoded the first primitive's actual vertex indices and submitted the corresponding extracted geometry.
 - Textured packets are identified but currently rendered through the untextured safety path; CLUT and VRAM texture upload remain next.
 - Build/test: CI validation pending.
+
+
+## 2026-09-11 — TMD texture metadata and PS1 conversion
+
+- Decoded the first textured primitive's actual UV coordinates, CLUT value and tpage value.
+- Added a PS1 BGR555-to-RGBA texture conversion helper for Android GLES uploads.
+- The extracted primitive still uses the untextured safety path because the unpacked VRAM source has not yet been connected to the tpage/CLUT coordinates.
+- Build/test: CI validation pending.

@@ -31,3 +31,12 @@
 - Routed handheld gamepad key events through the activity and retained GLES surface diagnostics.
 - The Android module remains intentionally source-limited: the real engine still requires the desktop SDL/LWJGL/JavaFX graph and an Android GLES renderer backend.
 - Build/device result: awaiting Actions validation; no RG405V test has been performed for this revision.
+
+
+## 2026-09-11 — renderer capability probe
+
+- Added an Android GL-thread probe for GLSL ES 3 shaders with uniform blocks, framebuffer objects, and integer textures used by the upstream renderer.
+- The probe records GLES version, renderer, extensions, maximum texture size, and uniform-block capacity in logcat.
+- This is a compatibility validation layer; it does not alter the existing render resolution or claim that the game renderer is connected.
+- Build result: GitHub Actions runs 58 and 59 succeeded.
+- Device result: APK is not yet installed/tested on the RG405V for this revision.

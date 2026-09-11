@@ -31,11 +31,14 @@ public final class MainActivity extends Activity {
         super.onCreate(state);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         final AndroidStoragePaths storage = new AndroidStoragePaths(this);
+        storage.ensureLayout();
         System.setProperty("severed.chains.root", storage.root().getAbsolutePath());
         GamePaths.configure(storage.root().toPath());
         gameDataStore = new GameDataStore(this);
         Log.i(TAG, "Android probe starting; storage root=" + storage.root()
-            + ", shared GamePaths root=" + GamePaths.root());
+            + ", shared GamePaths root=" + GamePaths.root()
+            + ", isos=" + storage.isos()
+            + ", extractedFiles=" + storage.extractedFiles());
 
         final FrameLayout root = new FrameLayout(this);
         surface = new SeveredChainsSurfaceView(this);

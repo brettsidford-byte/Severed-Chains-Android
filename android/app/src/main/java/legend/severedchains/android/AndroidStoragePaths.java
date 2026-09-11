@@ -15,6 +15,15 @@ public final class AndroidStoragePaths {
         return root;
     }
 
+    public void ensureLayout() {
+        root.mkdirs();
+        isos().mkdirs();
+        extractedFiles().mkdirs();
+        saves().mkdirs();
+        patches().mkdirs();
+        mods().mkdirs();
+    }
+
     public File isos() {
         return child("isos");
     }

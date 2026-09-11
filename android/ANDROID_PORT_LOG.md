@@ -300,6 +300,13 @@
 - This confirms the Android input seam matches the upstream program's `isos/` contract; the real `GameEngine.start()` platform integration remains a separate stage.
 - Build/test: source change made; CI/device validation pending.
 
+## 2026-09-11 — initialise canonical Android storage layout
+
+- Android now creates the canonical root directories at startup before configuring shared `GamePaths`: `isos/`, `files/`, `saves/`, `patches/`, and `mods/`.
+- Startup logging now reports the exact ISO and extracted-files paths, making any import/path mismatch directly verifiable through ADB.
+- No existing files are deleted or moved.
+- Build/test: CI validation pending; RG405V retest required.
+
 ## 2026-09-11 — Android unpacker transformation diagnostics
 
 - Added low-memory-path diagnostics around each upstream leaf transformation, including worker path, selected transformer, elapsed time, and remaining queue count.

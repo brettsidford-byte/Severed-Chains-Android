@@ -283,3 +283,12 @@
 - Startup progress and failures are written to logcat; no separate extraction control is exposed to the user.
 - This pass reaches the existing upstream data-preparation boundary, but the full `GameEngine` render loop is still not connected to the Android GLES backend.
 - Build/test: CI validation pending; physical RG405V test required.
+
+
+## 2026-09-11 — bound Android unpacker worker count
+
+- RG405V logcat showed `pool-4-thread-1647` and `pool-4-thread-2689` while the unpacker was still transforming files.
+- The upstream cached executor was therefore creating thousands of workers; this is unsuitable for Android's small heap and shared-file access.
+- The low-memory unpacker path now uses a fixed two-worker pool for transformations and file writes. Desktop cached-pool behaviour is preserved.
+- Made the file-backed data handle registry safe while worker threads are opening and closing temporary ISO members.
+- Build/test: CI validation pending; the currently running device process must be stopped before retesting.

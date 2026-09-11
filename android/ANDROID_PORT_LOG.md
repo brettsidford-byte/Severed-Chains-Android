@@ -101,3 +101,11 @@
 - Refactored the proof renderer to use the shared Android shader-program path.
 - Texture upload is available for the next texture-backed draw pass; no game asset is bundled or altered.
 - Build/test: CI validation pending.
+
+
+## 2026-09-11 — GLES framebuffer resource boundary
+
+- Added an Android GLES framebuffer object with RGBA colour texture attachment and optional depth/stencil renderbuffer.
+- Added framebuffer completeness validation and lifecycle cleanup.
+- The GLES proof backend now creates and validates a 1×1 off-screen target on the GL thread without changing the visible proof output.
+- Build/test: CI validation pending; physical-device framebuffer behaviour remains to be checked on the RG405V.

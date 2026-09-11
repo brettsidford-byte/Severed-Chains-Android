@@ -307,6 +307,12 @@
 - No existing files are deleted or moved.
 - Build/test: CI validation pending; RG405V retest required.
 
+## 2026-09-11 — stream large file-backed outputs
+
+- The RG405V crashed while writing a 109 MB extracted asset because `FileBackedFileData.write()` materialised the entire file through a direct buffer.
+- File-backed output now streams through a bounded 1 MB buffer, preserving the existing file-backed source and desktop behavior while avoiding large transient allocations.
+- Build/test: CI validation pending; RG405V retest required.
+
 ## 2026-09-11 — Android unpacker transformation diagnostics
 
 - Added low-memory-path diagnostics around each upstream leaf transformation, including worker path, selected transformer, elapsed time, and remaining queue count.

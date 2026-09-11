@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileBackedFileData extends FileData {
+  private static final int STREAM_BUFFER_SIZE = 1024 * 1024;
   private static final List<RandomAccessFile> closeMe = java.util.Collections.synchronizedList(new ArrayList<>());
 
   public static void closeAll() {
@@ -186,6 +187,16 @@ public class FileBackedFileData extends FileData {
 
   @Override
   public void write(final OutputStream out) throws IOException {
-    out.write(this.getBytes());
+    synchronized(this.file) {
+      this.file.seek(this.offset);
+      final byte[] chunk = new byte[Math.min(STREAM_BUFFER_SIZE, this.size)];
+      int remaining = this.size;
+      while(remaining > 0) {
+        final int count = Math.min(chunk.length, remaining);
+        this.file.readFully(chunk, 0, count);
+        out.write(chunk, 0, count);
+        remaining -= count;
+      }
+    }
   }
 }

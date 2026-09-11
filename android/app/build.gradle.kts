@@ -8,7 +8,6 @@ val sharedFileDataDir = layout.buildDirectory.dir("generated/sharedFileData")
 val sharedFileDataSupportDir = layout.buildDirectory.dir("generated/sharedFileDataSupport")
 val sharedUnpackerStructureDir = layout.buildDirectory.dir("generated/sharedUnpackerStructure")
 val sharedUnpackerOrchestrationDir = layout.buildDirectory.dir("generated/sharedUnpackerOrchestration")
-val sharedGlesBackendDir = layout.buildDirectory.dir("generated/sharedGlesBackend")
 
 val copySharedGamePaths = tasks.register("copySharedGamePaths") {
     doLast {
@@ -90,23 +89,6 @@ val copySharedUnpackerOrchestration = tasks.register("copySharedUnpackerOrchestr
     }
 }
 
-
-val copySharedGlesBackend = tasks.register("copySharedGlesBackend") {
-    doLast {
-        copy {
-            from(
-                "../../src/main/java/legend/core/renderer/opengles/GlesApi.java",
-                "../../src/main/java/legend/core/renderer/opengles/GlesFrameBuffer.java",
-                "../../src/main/java/legend/core/renderer/opengles/GlesMesh.java",
-                "../../src/main/java/legend/core/renderer/opengles/GlesShader.java",
-                "../../src/main/java/legend/core/renderer/opengles/GlesShaderUniformBuffer.java",
-                "../../src/main/java/legend/core/renderer/opengles/GlesTexture.java"
-            )
-            into(sharedGlesBackendDir.get().asFile.resolve("legend/core/renderer/opengles"))
-        }
-    }
-}
-
 android {
     namespace = "legend.severedchains.android"
     compileSdk = 35
@@ -145,8 +127,7 @@ android {
                 sharedFileDataDir,
                 sharedFileDataSupportDir,
                 sharedUnpackerStructureDir,
-                sharedUnpackerOrchestrationDir,
-                sharedGlesBackendDir
+                sharedUnpackerOrchestrationDir
             )
         }
     }
@@ -171,5 +152,4 @@ tasks.named("preBuild") {
     dependsOn(copySharedFileDataSupport)
     dependsOn(copySharedUnpackerStructure)
     dependsOn(copySharedUnpackerOrchestration)
-    dependsOn(copySharedGlesBackend)
 }

@@ -95,7 +95,7 @@ public final class GameEngine {
   public static final EventManager EVENTS = new EventManager(access -> EVENT_ACCESS = access, GameEngine::onModError);
   public static final Registries REGISTRIES = new Registries(EVENTS, access -> REGISTRY_ACCESS = access);
 
-  public static final ScriptManager SCRIPTS = new ScriptManager(List.of(Path.of("./patches/libs"), Path.of("./patches/scripts")), Path.of("./patches"));
+  public static final ScriptManager SCRIPTS = new ScriptManager(List.of(GamePaths.patches().resolve("libs"), GamePaths.patches().resolve("scripts")), GamePaths.patches());
   public static final Sequencer SEQUENCER = new Sequencer();
 
   public static final ConfigCollection CONFIG = new ConfigCollection();
@@ -105,7 +105,7 @@ public final class GameEngine {
   public static final RenderEngine RENDERER = new RenderEngine();
 
   public static final FontManager FONTS = new FontManager();
-  public static Font DEFAULT_FONT = FONTS.get(Path.of("./gfx/fonts/default.json"));
+  public static Font DEFAULT_FONT = FONTS.get(GamePaths.gfx().resolve("fonts/default.json"));
 
   private static TextureAtlas TEXTURE_ATLAS;
   private static Texture UI_TEXTURE;
@@ -195,7 +195,7 @@ public final class GameEngine {
 
         RENDERER.setRenderCallback(GameEngine::loadGfx);
 
-        Files.createDirectories(Path.of("saves"));
+        Files.createDirectories(GamePaths.saves());
 
         synchronized(INIT_LOCK) {
           Unpacker.setStatusListener(status -> statusText = status);
@@ -214,7 +214,7 @@ public final class GameEngine {
 
           statusText = I18n.translate("unpacker.patching_scripts");
           try {
-            new ScriptPatcher(Path.of("./patches"), Path.of("./files"), Path.of("./files/patches/cache"), Path.of("./files/patches/backups")).apply();
+            new ScriptPatcher(GamePaths.patches(), GamePaths.files(), GamePaths.files().resolve("patches/cache"), GamePaths.files().resolve("patches/backups")).apply();
           } catch(final Exception e) {
             statusText = I18n.translate("unpacker.patching_failed");
             throw e;
@@ -240,12 +240,12 @@ public final class GameEngine {
     thread.start();
 
     // Find and load all mods so their global config can be shown in the title screen options menu
-    MOD_ACCESS.findMods(Path.of("./mods"), Version.VERSION);
+    MOD_ACCESS.findMods(GamePaths.mods(), Version.VERSION);
     bootMods(MODS.getAllModIds());
 
-    ConfigStorage.loadConfig(CONFIG, ConfigStorageLocation.GLOBAL, Path.of("config.dcnf"));
+    ConfigStorage.loadConfig(CONFIG, ConfigStorageLocation.GLOBAL, GamePaths.configDcnf());
 
-    DEFAULT_FONT = FONTS.get(Path.of("gfx", "fonts", CONFIG.getConfig(CoreMod.RETAIL_FONT_CONFIG.get())));
+    DEFAULT_FONT = FONTS.get(GamePaths.gfx().resolve("fonts").resolve(CONFIG.getConfig(CoreMod.RETAIL_FONT_CONFIG.get())));
 
     AUDIO_THREAD.init();
     AUDIO_THREAD.setMusicPlayerVolume(CONFIG.getConfig(CoreMod.MUSIC_VOLUME_CONFIG.get()) * CONFIG.getConfig(CoreMod.MASTER_VOLUME_CONFIG.get()));
@@ -283,7 +283,7 @@ public final class GameEngine {
 
   private static void loadLangOverrides(final Locale locale) {
     try {
-      LANG_ACCESS.loadLangOverrides(Path.of("lang"), locale);
+      LANG_ACCESS.loadLangOverrides(GamePaths.lang(), locale);
     } catch(final IOException e) {
       LOGGER.warn("Failed to load lang overrides", e);
     }
@@ -442,10 +442,10 @@ public final class GameEngine {
   private static void loadGfx() {
     RENDERER.api().translucency(Translucency.HALF_B_PLUS_HALF_F);
 
-    UI_TEXTURE = Texture.png("UI", Path.of("gfx", "ui", "ui.png"));
+    UI_TEXTURE = Texture.png("UI", GamePaths.gfx().resolve("ui/ui.png"));
     UI_TEXTURE.persistent = true;
 
-    eyeTexture = Texture.png("Loading eye", Path.of("gfx", "textures", "loading.png"));
+    eyeTexture = Texture.png("Loading eye", GamePaths.gfx().resolve("textures/loading.png"));
 
     texturedObj = new QuadBuilder("Textured Obj")
       .bpp(Bpp.BITS_24)
@@ -453,10 +453,10 @@ public final class GameEngine {
       .uvSize(1.0f, 1.0f)
       .build();
 
-    RENDERER.window().setWindowIcon(Path.of("gfx/textures/icon.png"));
+    RENDERER.window().setWindowIcon(GamePaths.gfx().resolve("textures/icon.png"));
 
     try {
-      VideoPlayer.play(Path.of("gfx/intro.mp4"), GameEngine::renderIntro, () -> {
+      VideoPlayer.play(GamePaths.gfx().resolve("intro.mp4"), GameEngine::renderIntro, () -> {
         cinematicFinished = true;
         RENDERER.setRenderCallback(GameEngine::renderIntro);
       });

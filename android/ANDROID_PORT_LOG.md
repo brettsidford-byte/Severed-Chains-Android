@@ -64,3 +64,10 @@
 - Added Android packaging rules for duplicate dependency metadata.
 - Build result: GitHub Actions run 77 succeeded and produced the ARM64 debug APK.
 - The APK has not yet been retested on the RG405V for this revision. The real unpacker orchestration, engine startup, renderer backend, audio backend, and normal introduction screen remain future stages.
+
+## 2026-09-11 — unpacker structural dependency group
+
+- Included actual upstream `DirectoryEntry`, `FileMap`, `PathNode`, `UnpackerException`, and `UnpackerStoppedRuntimeException` classes.
+- These classes provide the ISO directory tree, file-map output, transformation path tree, and existing error types needed by the real unpacker.
+- Build result: GitHub Actions run 80 succeeded and produced a new ARM64 debug APK.
+- The Android app still performs ISO recognition only; the complete upstream `Unpacker` remains blocked on its transformation, XA-audio, script, and game-segment dependencies.

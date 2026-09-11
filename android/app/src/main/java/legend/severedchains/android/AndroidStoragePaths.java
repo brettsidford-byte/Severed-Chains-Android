@@ -15,7 +15,11 @@ public final class AndroidStoragePaths {
         return root;
     }
 
-    public File isos() {\n        return child("isos");\n    }\n\n    public File gameData() {
+    public File isos() {
+        return child("isos");
+    }
+
+    public File gameData() {
         return child("game-data");
     }
 

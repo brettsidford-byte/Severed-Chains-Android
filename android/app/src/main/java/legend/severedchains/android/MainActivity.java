@@ -2,10 +2,10 @@ package legend.severedchains.android;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 public final class MainActivity extends Activity {
@@ -13,18 +13,21 @@ public final class MainActivity extends Activity {
     protected void onCreate(final Bundle state) {
         super.onCreate(state);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(createProbeView());
-        hideSystemUi();
-    }
 
-    private View createProbeView() {
-        final TextView view = new TextView(this);
-        view.setText("Severed Chains Android\n\nAndroid packaging probe\nGame engine integration pending");
-        view.setTextColor(0xffffffff);
-        view.setTextSize(18);
-        view.setGravity(android.view.Gravity.CENTER);
-        view.setBackgroundColor(0xff000000);
-        return view;
+        final FrameLayout root = new FrameLayout(this);
+        root.addView(new SeveredChainsSurfaceView(this));
+
+        final TextView status = new TextView(this);
+        status.setText("Severed Chains Android\nOpenGL ES 3 surface active\nPhysical controls are being routed");
+        status.setTextColor(0xffffffff);
+        status.setTextSize(16);
+        status.setGravity(android.view.Gravity.CENTER);
+        root.addView(status, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT));
+
+        setContentView(root);
+        hideSystemUi();
     }
 
     private void hideSystemUi() {

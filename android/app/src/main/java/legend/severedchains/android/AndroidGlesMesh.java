@@ -105,6 +105,59 @@ public final class AndroidGlesMesh {
         return new AndroidGlesMesh(vao, vbo, ebo, indices.length);
     }
 
+    public static AndroidGlesMesh createStandardMesh(final float[] vertices, final short[] indices,
+                                                       final int positionLocation,
+                                                       final int normalLocation,
+                                                       final int uvLocation,
+                                                       final int tpageLocation,
+                                                       final int clutLocation,
+                                                       final int colourLocation,
+                                                       final int flagsLocation) {
+        final FloatBuffer vertexBuffer = directFloats(vertices);
+        final ShortBuffer indexBuffer = directShorts(indices);
+        final int[] handles = new int[1];
+
+        GLES30.glGenVertexArrays(1, handles, 0);
+        final int vao = handles[0];
+        GLES30.glGenBuffers(1, handles, 0);
+        final int vbo = handles[0];
+        GLES30.glGenBuffers(1, handles, 0);
+        final int ebo = handles[0];
+
+        GLES30.glBindVertexArray(vao);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vbo);
+        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, vertices.length * Float.BYTES,
+            vertexBuffer, GLES30.GL_STATIC_DRAW);
+        GLES30.glBindBuffer(GLES30.GL_ELEMENT_ARRAY_BUFFER, ebo);
+        GLES30.glBufferData(GLES30.GL_ELEMENT_ARRAY_BUFFER, indices.length * Short.BYTES,
+            indexBuffer, GLES30.GL_STATIC_DRAW);
+
+        final int stride = 16 * Float.BYTES;
+        GLES30.glEnableVertexAttribArray(positionLocation);
+        GLES30.glVertexAttribPointer(positionLocation, 4, GLES30.GL_FLOAT, false, stride, 0);
+        GLES30.glEnableVertexAttribArray(normalLocation);
+        GLES30.glVertexAttribPointer(normalLocation, 3, GLES30.GL_FLOAT, false, stride, 4 * Float.BYTES);
+        GLES30.glEnableVertexAttribArray(uvLocation);
+        GLES30.glVertexAttribPointer(uvLocation, 2, GLES30.GL_FLOAT, false, stride, 7 * Float.BYTES);
+        GLES30.glEnableVertexAttribArray(tpageLocation);
+        GLES30.glVertexAttribPointer(tpageLocation, 1, GLES30.GL_FLOAT, false, stride, 9 * Float.BYTES);
+        GLES30.glEnableVertexAttribArray(clutLocation);
+        GLES30.glVertexAttribPointer(clutLocation, 1, GLES30.GL_FLOAT, false, stride, 10 * Float.BYTES);
+        GLES30.glEnableVertexAttribArray(colourLocation);
+        GLES30.glVertexAttribPointer(colourLocation, 4, GLES30.GL_FLOAT, false, stride, 11 * Float.BYTES);
+        GLES30.glEnableVertexAttribArray(flagsLocation);
+        GLES30.glVertexAttribPointer(flagsLocation, 1, GLES30.GL_FLOAT, false, stride, 15 * Float.BYTES);
+        GLES30.glBindVertexArray(0);
+
+        if (GLES30.glGetError() != GLES30.GL_NO_ERROR) {
+            GLES30.glDeleteVertexArrays(1, new int[]{vao}, 0);
+            GLES30.glDeleteBuffers(1, new int[]{vbo}, 0);
+            GLES30.glDeleteBuffers(1, new int[]{ebo}, 0);
+            return null;
+        }
+        return new AndroidGlesMesh(vao, vbo, ebo, indices.length);
+    }
+
     public void draw() {
         GLES30.glBindVertexArray(vao);
         GLES30.glDrawElements(GLES30.GL_TRIANGLES, indexCount, GLES30.GL_UNSIGNED_SHORT, 0);

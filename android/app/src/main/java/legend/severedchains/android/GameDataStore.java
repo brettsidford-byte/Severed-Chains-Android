@@ -123,7 +123,11 @@ public final class GameDataStore {
         } catch (IOException ignored) {
             return;
         }
-        writeManifest(new File(target, IMPORTED_FILES), names);
+        try {
+            writeManifest(new File(target, IMPORTED_FILES), names);
+        } catch (IOException ignored) {
+            // Legacy migration is best-effort; the original files remain untouched.
+        }
     }
 
     private void writeManifest(final File manifest, final Set<String> names) throws IOException {

@@ -62,17 +62,6 @@ public final class MainActivity extends Activity {
         buttonParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
         controls.addView(select, buttonParams);
 
-        extract = new Button(this);
-        extract.setText("Run existing Severed Chains extraction");
-        extract.setEnabled(false);
-        extract.setOnClickListener(view -> runExtraction());
-        final FrameLayout.LayoutParams extractParams = new FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.WRAP_CONTENT,
-            FrameLayout.LayoutParams.WRAP_CONTENT);
-        extractParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
-        extractParams.bottomMargin = 64;
-        controls.addView(extract, extractParams);
-
         root.addView(controls, new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.MATCH_PARENT));
@@ -116,11 +105,11 @@ public final class MainActivity extends Activity {
                 Log.i(TAG, "Imported " + imported.size() + " selected file(s); total available="
                     + gameDataStore.getImportedFileCount());
                 runOnUiThread(() -> {
-                    status.setText(gameDataStore.getImportSummary() + "\n"
+                    status.setText("ISO files copied to " + gameDataStore.getDataDirectory() + "\n"
+                        + gameDataStore.getImportSummary() + "\n"
                         + GameDataInspector.inspect(gameDataStore.getImportedFiles()));
                     select.setEnabled(true);
-                    updateExtractionButton();
-                });
+                            });
             } catch (final IOException exception) {
                 Log.e(TAG, "Game-data import failed", exception);
                 runOnUiThread(() -> {
@@ -141,62 +130,6 @@ public final class MainActivity extends Activity {
             status.setText(BUILD_LABEL + "\nSelect all four ISO files\nOpenGL ES 3 surface active");
         }
         updateExtractionButton();
-    }
-
-    private void updateExtractionButton() {
-        boolean ready = gameDataStore.getImportedFiles().size() >= 4;
-        if (ready) {
-            for (final java.io.File file : gameDataStore.getImportedFiles()) {
-                if (GameDataInspector.identify(file) == null) {
-                    ready = false;
-                    break;
-                }
-            }
-        }
-        if (extract != null) extract.setEnabled(ready);
-    }
-
-    private void runExtraction() {
-        extract.setEnabled(false);
-        select.setEnabled(false);
-        status.setText("Running the existing Severed Chains extraction...\nPlease keep the app open");
-        Unpacker.setStatusListener(message -> runOnUiThread(() -> status.setText(message)));
-        new Thread(() -> {
-            try {
-                Unpacker.unpack();
-                boolean ready = AndroidEngineSession.isGameDataReady();
-                if (!ready) {
-                    runOnUiThread(() -> status.setText(
-                        "Initial extraction pass did not finish. Retrying with low-memory mode...\n"
-                            + "Please keep the app open"));
-                    // The upstream unpacker deliberately returns after catching an
-                    // Android memory pressure event and enables its low-memory mode.
-                    // Retry in the same process so that setting takes effect.
-                    Unpacker.unpack();
-                    ready = AndroidEngineSession.isGameDataReady();
-                }
-                final boolean extractionReady = ready;
-                runOnUiThread(() -> {
-                    if (extractionReady) {
-                        surface.startEngine();
-                    }
-                    status.setText(extractionReady
-                        ? BUILD_LABEL + "\nExtraction completed.\n"
-                            + AndroidEngineSession.describe() + "\n" + surface.engineStatus()
-                        : BUILD_LABEL + "\nExtraction stopped before producing its completion marker.\n"
-                            + AndroidEngineSession.describe());
-                    select.setEnabled(true);
-                    updateExtractionButton();
-                });
-            } catch (final RuntimeException exception) {
-                Log.e(TAG, "Severed Chains extraction failed", exception);
-                runOnUiThread(() -> {
-                    status.setText("Extraction failed: " + exception.getMessage());
-                    select.setEnabled(true);
-                    updateExtractionButton();
-                });
-            }
-        }, "severed-chains-unpacker").start();
     }
 
     private void hideSystemUi() {

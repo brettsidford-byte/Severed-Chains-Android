@@ -144,3 +144,12 @@
 - Added bindings for the real `transforms`, `transforms2`, `lighting`, `clutAnimation`, `projectionInfo`, and `scissor` uniform blocks.
 - The GL-thread diagnostic now reports whether this actual shader contract can be created on Android.
 - Build/test: CI validation pending; no claim is made yet about rendering a real game scene.
+
+
+## 2026-09-11 — standard shader uniform-buffer boundary
+
+- Added Android GLES uniform-buffer objects with std140-sized storage, upload, binding and cleanup.
+- The standard-shader GL probe now allocates and binds the six real Severed Chains uniform blocks:
+  `transforms`, `transforms2`, `lighting`, `clutAnimation`, `projectionInfo`, and `scissor`.
+- This uploads safe zero-filled defaults for binding validation only; it does not yet render a game mesh.
+- Build/test: CI validation pending.

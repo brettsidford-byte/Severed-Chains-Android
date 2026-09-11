@@ -10,10 +10,12 @@ public final class AndroidEngineRenderBridge {
     private volatile boolean created;
     private volatile int width;
     private volatile int height;
+    private final AndroidGlesRenderBackend backend = new AndroidGlesRenderBackend();
 
     public void onSurfaceCreated() {
         created = true;
         Log.i(TAG, "Android engine render bridge created: " + GLES30.glGetString(GLES30.GL_VERSION));
+        backend.create();
     }
 
     public void onSurfaceChanged(final int width, final int height) {
@@ -25,8 +27,12 @@ public final class AndroidEngineRenderBridge {
 
     public void onDrawFrame() {
         if (!created) return;
-        // The existing game renderer will replace this clear when the Android RenderApi is attached.
-        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
+        // The existing game renderer will replace this proof draw when the Android RenderApi is attached.
+        backend.draw();
+    }
+
+    public boolean isBackendReady() {
+        return backend.isReady();
     }
 
     public boolean isCreated() {

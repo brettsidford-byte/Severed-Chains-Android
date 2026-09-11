@@ -278,6 +278,11 @@
 - Added bounded sub-image updates, texture-unit binding, filtering/wrap configuration, and idempotent deletion.
 - This is an adapter component; the temporary diagnostic backend remains active until the complete RenderApi port is assembled.
 
+## 2026-09-11 — Android GLES framebuffer binding safety
+
+- The framebuffer adapter now restores the previously bound framebuffer after creation instead of forcing the default target.
+- Added an explicit complete-target bind path for the future Android RenderApi backend.
+
 
 ## 2026-09-11 — atomic ISO import and normal-flow cleanup
 

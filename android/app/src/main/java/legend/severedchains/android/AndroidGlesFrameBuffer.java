@@ -41,6 +41,8 @@ public final class AndroidGlesFrameBuffer {
         final int framebuffer = handles[0];
         int depthStencil = 0;
 
+        final int[] previous = new int[1];
+        GLES30.glGetIntegerv(GLES30.GL_FRAMEBUFFER_BINDING, previous, 0);
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, framebuffer);
         GLES30.glFramebufferTexture2D(GLES30.GL_FRAMEBUFFER, GLES30.GL_COLOR_ATTACHMENT0,
             GLES30.GL_TEXTURE_2D, colour, 0);
@@ -62,7 +64,7 @@ public final class AndroidGlesFrameBuffer {
                 + Integer.toHexString(GLES30.glCheckFramebufferStatus(GLES30.GL_FRAMEBUFFER)));
         }
         GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER, 0);
-        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, previous[0]);
 
         if (!complete) {
             GLES30.glDeleteFramebuffers(1, new int[]{framebuffer}, 0);
@@ -82,6 +84,12 @@ public final class AndroidGlesFrameBuffer {
 
     public static void unbind() {
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);
+    }
+
+    /** Binds this target without changing the caller's viewport until draw time. */
+    public void bindForDraw() {
+        if (!complete) throw new IllegalStateException("Cannot bind incomplete framebuffer");
+        bind();
     }
 
     public void destroy() {

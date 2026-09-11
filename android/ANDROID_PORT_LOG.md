@@ -215,3 +215,11 @@
 - The unpacker now rebinds its output and replacement paths at the start of each extraction.
 - This ensures the completion marker and extracted files are written under the same Android app-private root used by the readiness check.
 - Build/test: CI validation pending; device retest required.
+
+
+## 2026-09-11 — retry low-memory extraction on Android
+
+- Confirmed the upstream unpacker can catch Android memory pressure, enable its low-memory mode, and return without writing the completion marker.
+- Android now checks the marker after extraction and automatically retries once using the enabled low-memory path.
+- Corrected extraction status messages to use real line breaks and to distinguish completed extraction from an incomplete pass.
+- Build/test: CI validation pending; device retest required.

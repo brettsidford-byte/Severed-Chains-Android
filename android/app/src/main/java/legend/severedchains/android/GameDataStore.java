@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 public final class GameDataStore {
-    private static final String DATA_DIRECTORY = "game-data";
+    private static final String LEGACY_DIRECTORY = "game-data";\n    private static final String ISO_DIRECTORY = "isos";
     private static final String IMPORTED_FILES = "imported-files.txt";
 
     private final Context context;
@@ -26,7 +26,7 @@ public final class GameDataStore {
 
     public GameDataStore(final Context context) {
         this.context = context.getApplicationContext();
-        paths = new AndroidStoragePaths(this.context);
+        paths = new AndroidStoragePaths(this.context);\n        migrateLegacyData();
     }
 
     public boolean hasImportedData() {
@@ -64,7 +64,7 @@ public final class GameDataStore {
 
     public List<File> importDocuments(final Intent result) throws IOException {
         final List<File> imported = new ArrayList<>();
-        final File directory = paths.gameData();
+        final File directory = paths.isos();
         if (!directory.isDirectory() && !directory.mkdirs()) {
             throw new IOException("Unable to create Android game-data directory");
         }
@@ -112,7 +112,39 @@ public final class GameDataStore {
     }
 
     public File getDataDirectory() {
-        return new File(context.getFilesDir(), DATA_DIRECTORY);
+        return paths.isos();
+    }
+
+    private void migrateLegacyData() {
+        final File legacy = paths.gameData();
+        final File oldManifest = new File(legacy, IMPORTED_FILES);
+        if (!oldManifest.isFile()) return;
+        final File target = paths.isos();
+        if (!target.isDirectory()) target.mkdirs();
+        final Set<String> names = new LinkedHashSet<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(oldManifest))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.isBlank()) {
+                    final File source = new File(legacy, line);
+                    final File destination = new File(target, line);
+                    if (source.isFile()) {
+                        if (!destination.isFile()) {
+                            java.nio.file.Files.copy(source.toPath(), destination.toPath());
+                        }
+                        names.add(line);
+                    }
+                }
+            }
+        } catch (IOException ignored) {
+            return;
+        }
+        final File manifest = new File(target, IMPORTED_FILES);
+        try (FileOutputStream output = new FileOutputStream(manifest, false)) {
+            for (final String name : names) {
+                output.write((name + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+        } catch (IOException ignored) { }
     }
 
     private void copy(final Uri source, final File destination) throws IOException {

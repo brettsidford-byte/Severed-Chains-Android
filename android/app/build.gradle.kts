@@ -10,8 +10,8 @@ android {
         applicationId = "legend.severedchains.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.0-android-storage-diagnostics"
+        versionCode = 3
+        versionName = "0.3.0-shared-paths"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -22,6 +22,14 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+        }
+    }
+
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("../../src/main/java")
+            java.include("legend/severedchains/android/**")
+            java.include("legend/core/GamePaths.java")
         }
     }
 

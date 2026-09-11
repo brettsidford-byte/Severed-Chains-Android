@@ -14,6 +14,8 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.util.List;
 
+import legend.core.GamePaths;
+
 public final class MainActivity extends Activity {
     private static final String TAG = "SeveredChains";
     private static final int SELECT_GAME_DATA = 1001;
@@ -28,8 +30,10 @@ public final class MainActivity extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         final AndroidStoragePaths storage = new AndroidStoragePaths(this);
         System.setProperty("severed.chains.root", storage.root().getAbsolutePath());
+        GamePaths.configure(storage.root().toPath());
         gameDataStore = new GameDataStore(this);
-        Log.i(TAG, "Android probe starting; storage root=" + storage.root());
+        Log.i(TAG, "Android probe starting; storage root=" + storage.root()
+            + ", shared GamePaths root=" + GamePaths.root());
 
         final FrameLayout root = new FrameLayout(this);
         root.addView(new SeveredChainsSurfaceView(this));

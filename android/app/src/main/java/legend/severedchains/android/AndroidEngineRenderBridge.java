@@ -10,7 +10,7 @@ public final class AndroidEngineRenderBridge {
     private volatile boolean created;
     private volatile int width;
     private volatile int height;
-    private final AndroidGlesRenderBackend backend = new AndroidGlesRenderBackend();
+    private final AndroidRenderApi backend = new AndroidGlesRenderBackend();
 
     public void onSurfaceCreated() {
         created = true;
@@ -21,13 +21,13 @@ public final class AndroidEngineRenderBridge {
     public void onSurfaceChanged(final int width, final int height) {
         this.width = width;
         this.height = height;
-        GLES30.glViewport(0, 0, width, height);
+        backend.resize(width, height);
         Log.i(TAG, "Android engine render bridge resized: " + width + "x" + height);
     }
 
     public void onDrawFrame() {
         if (!created) return;
-        // The existing game renderer will replace this proof draw when the Android RenderApi is attached.
+        backend.beginFrame();
         backend.draw();
     }
 

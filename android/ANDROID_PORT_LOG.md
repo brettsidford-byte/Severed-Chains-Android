@@ -23,7 +23,6 @@
 - Bumped the Android debug build to version `0.3.0`.
 - Build/device result: awaiting the new GitHub Actions build; the RG405V has not yet been retested with this revision.
 
-
 ## 2026-09-11 — Android platform seam and controller state
 
 - Added `PlatformManagerFactory` and changed `GameEngine` to obtain its platform manager through the factory; desktop continues to default to SDL.
@@ -31,7 +30,6 @@
 - Routed handheld gamepad key events through the activity and retained GLES surface diagnostics.
 - The Android module remains intentionally source-limited: the real engine still requires the desktop SDL/LWJGL/JavaFX graph and an Android GLES renderer backend.
 - Build/device result: awaiting Actions validation; no RG405V test has been performed for this revision.
-
 
 ## 2026-09-11 — renderer capability probe
 
@@ -41,7 +39,6 @@
 - Build result: GitHub Actions runs 58, 59, and final run 61 succeeded. The final revision also corrects framebuffer diagnostic status reporting.
 - Device result: APK is not yet installed/tested on the RG405V for this revision.
 
-
 ## 2026-09-11 — upstream-compatible ISO preflight
 
 - Replaced Android's loose first-32-MiB string scan with the same PlayStation sector-16 volume-header validation used by the upstream unpacker.
@@ -50,7 +47,6 @@
 - Build result: GitHub Actions runs 63 and 64 succeeded.
 - The full upstream unpacker remains to be included with its dependency graph before extraction can execute on Android.
 
-
 ## 2026-09-11 — upstream IsoReader integration boundary
 
 - Attempted to include the complete upstream unpacker package; compilation exposed dependencies on core GPU/math, game, audio, logging, and third-party classes.
@@ -58,3 +54,13 @@
 - Included the actual upstream `IsoReader` class in the Android source set and routed Android disc preflight through it.
 - Build result: GitHub Actions run 70 succeeded.
 - Remaining extraction work is to port/include the unpacker's dependency graph, not to write a replacement extractor.
+
+## 2026-09-11 — file-data/archive dependency group
+
+- Included the actual upstream `FileData`, `FileBackedFileData`, `ExpandableFileData`, `MrgArchive`, and `DeffArchive` classes.
+- Added the upstream `Rect4i`, `MV`, and `IntRef` support classes.
+- Added a small Android-only Java 17 binary helper with the byte-array operations required by upstream file data.
+- Added Java 17-compatible Android registry types instead of the upstream Java 21 mod-loader binary.
+- Added Android packaging rules for duplicate dependency metadata.
+- Build result: GitHub Actions run 77 succeeded and produced the ARM64 debug APK.
+- The APK has not yet been retested on the RG405V for this revision. The real unpacker orchestration, engine startup, renderer backend, audio backend, and normal introduction screen remain future stages.

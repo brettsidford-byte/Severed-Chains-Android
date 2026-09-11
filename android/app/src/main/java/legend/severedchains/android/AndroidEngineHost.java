@@ -27,6 +27,7 @@ public final class AndroidEngineHost {
     private volatile boolean surfaceReady;
     private volatile boolean startRequested;
     private volatile String failure;
+    private final AndroidGameFrameLoop frameLoop = new AndroidGameFrameLoop();
 
     public void requestStart() {
         startRequested = true;
@@ -42,6 +43,7 @@ public final class AndroidEngineHost {
     public void onSurfaceDestroyed() {
         surfaceReady = false;
         if (state == State.RUNNING_RENDER_BRIDGE) {
+            frameLoop.stop();
             state = State.WAITING_FOR_SURFACE;
         }
     }
@@ -49,8 +51,16 @@ public final class AndroidEngineHost {
     public void onFrame() {
         if (state == State.READY_FOR_ENGINE && startRequested) {
             state = State.RUNNING_RENDER_BRIDGE;
+            frameLoop.start();
             Log.i(TAG, "Android engine host entered render-bridge phase");
         }
+        if (state == State.RUNNING_RENDER_BRIDGE) {
+            frameLoop.tick();
+        }
+    }
+
+    public AndroidGameFrameLoop frameLoop() {
+        return frameLoop;
     }
 
     public State state() {
@@ -62,7 +72,8 @@ public final class AndroidEngineHost {
         if (error != null) {
             return "Android engine host failed: " + error;
         }
-        return "Android engine host: " + state.name().toLowerCase().replace('_', ' ');
+        return "Android engine host: " + state.name().toLowerCase().replace('_', ' ')
+            + " (" + frameLoop.describe() + ")";
     }
 
     private void updateState() {

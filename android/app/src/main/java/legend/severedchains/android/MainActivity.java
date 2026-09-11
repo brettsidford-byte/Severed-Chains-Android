@@ -52,16 +52,6 @@ public final class MainActivity extends Activity {
         buttonParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
         controls.addView(select, buttonParams);
 
-        extract = new Button(this);
-        extract.setText("Extract imported game data");
-        extract.setOnClickListener(view -> extractGameData());
-        final FrameLayout.LayoutParams extractParams = new FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.WRAP_CONTENT,
-            FrameLayout.LayoutParams.WRAP_CONTENT);
-        extractParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
-        extractParams.bottomMargin = 72;
-        controls.addView(extract, extractParams);
-
         root.addView(controls, new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.MATCH_PARENT));
@@ -105,32 +95,6 @@ public final class MainActivity extends Activity {
                 });
             }
         }, "game-data-import").start();
-    }
-
-    private void extractGameData() {
-        status.setText("Extracting PlayStation ISO files...\\nPlease keep the app open");
-        select.setEnabled(false);
-        extract.setEnabled(false);
-        new Thread(() -> {
-            try {
-                AndroidIsoExtractor.extract(gameDataStore.getImportedFiles(),
-                    new AndroidStoragePaths(this).extractedFiles(),
-                    message -> runOnUiThread(() -> status.setText(message)));
-                runOnUiThread(() -> {
-                    status.setText("ISO extraction complete\\n"
-                        + "Output: " + new AndroidStoragePaths(this).extractedFiles());
-                    select.setEnabled(true);
-                    extract.setEnabled(true);
-                });
-            } catch (final IOException exception) {
-                Log.e(TAG, "ISO extraction failed", exception);
-                runOnUiThread(() -> {
-                    status.setText("ISO extraction failed: " + exception.getMessage());
-                    select.setEnabled(true);
-                    extract.setEnabled(true);
-                });
-            }
-        }, "iso-extraction").start();
     }
 
     private void updateStatus() {

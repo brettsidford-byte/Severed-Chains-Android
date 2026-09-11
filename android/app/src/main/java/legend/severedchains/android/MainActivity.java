@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.util.List;
 
 import legend.core.GamePaths;
+import legend.game.unpacker.Unpacker;
+import legend.game.unpacker.UnpackerException;
 
 public final class MainActivity extends Activity {
     private static final String TAG = "SeveredChains";
@@ -23,6 +25,7 @@ public final class MainActivity extends Activity {
     private GameDataStore gameDataStore;
     private TextView status;
     private Button select;
+    private Button extract;
     private SeveredChainsSurfaceView surface;
 
     @Override
@@ -58,6 +61,17 @@ public final class MainActivity extends Activity {
             FrameLayout.LayoutParams.WRAP_CONTENT);
         buttonParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
         controls.addView(select, buttonParams);
+
+        extract = new Button(this);
+        extract.setText("Run existing Severed Chains extraction");
+        extract.setEnabled(false);
+        extract.setOnClickListener(view -> runExtraction());
+        final FrameLayout.LayoutParams extractParams = new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT);
+        extractParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
+        extractParams.bottomMargin = 64;
+        controls.addView(extract, extractParams);
 
         root.addView(controls, new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
@@ -105,6 +119,8 @@ public final class MainActivity extends Activity {
                     status.setText(gameDataStore.getImportSummary() + "\n"
                         + GameDataInspector.inspect(gameDataStore.getImportedFiles()));
                     select.setEnabled(true);
+                    updateExtractionButton();
+                    updateExtractionButton();
                 });
             } catch (final IOException exception) {
                 Log.e(TAG, "Game-data import failed", exception);
@@ -125,6 +141,44 @@ public final class MainActivity extends Activity {
         } else {
             status.setText("Select all four ISO files\nOpenGL ES 3 surface active");
         }
+        updateExtractionButton();
+    }
+
+    private void updateExtractionButton() {
+        boolean ready = gameDataStore.getImportedFiles().size() >= 4;
+        if (ready) {
+            for (final java.io.File file : gameDataStore.getImportedFiles()) {
+                if (GameDataInspector.identify(file) == null) {
+                    ready = false;
+                    break;
+                }
+            }
+        }
+        extract.setEnabled(ready);
+    }
+
+    private void runExtraction() {
+        extract.setEnabled(false);
+        select.setEnabled(false);
+        status.setText("Running the existing Severed Chains extraction...\\nPlease keep the app open");
+        Unpacker.setStatusListener(message -> runOnUiThread(() -> status.setText(message)));
+        new Thread(() -> {
+            try {
+                Unpacker.unpack();
+                runOnUiThread(() -> {
+                    status.setText("Extraction completed.\\nSevered Chains files are ready.");
+                    select.setEnabled(true);
+                    updateExtractionButton();
+                });
+            } catch (final UnpackerException | RuntimeException exception) {
+                Log.e(TAG, "Severed Chains extraction failed", exception);
+                runOnUiThread(() -> {
+                    status.setText("Extraction failed: " + exception.getMessage());
+                    select.setEnabled(true);
+                    updateExtractionButton();
+                });
+            }
+        }, "severed-chains-unpacker").start();
     }
 
     private void hideSystemUi() {

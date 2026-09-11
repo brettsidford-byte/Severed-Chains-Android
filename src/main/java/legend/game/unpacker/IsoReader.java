@@ -1,7 +1,9 @@
 package legend.game.unpacker;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class IsoReader {
@@ -91,6 +93,54 @@ public class IsoReader {
 
       return data;
     } catch(final IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Streams sectors directly to a temporary file so the low-memory unpacker
+   * never creates one large byte array for an ISO member.
+   */
+  public int readSectorsToFile(final Path output, int sector, final int length, final boolean raw) {
+    int sectorsRead = 0;
+    int dataRead = 0;
+    boolean endOfRecord = false;
+    final int sectorCount = (length + 0x7ff) / 0x800;
+
+    try (OutputStream stream = Files.newOutputStream(output)) {
+      final byte[] sectorData = new byte[0x930];
+      int sectorSize = 0;
+
+      while (!endOfRecord) {
+        this.seekSectorRaw(sector);
+        this.read(sectorData);
+
+        if (sectorSize == 0) {
+          sectorSize = raw || ((sectorData[16 + 2] >>> 5) & 1) != 0 ? 0x930 : 0x800;
+        }
+
+        endOfRecord = sectorsRead >= sectorCount - 1;
+        final int bytesToWrite;
+        final int sourceOffset;
+        if (raw) {
+          bytesToWrite = sectorSize;
+          sourceOffset = 0;
+        } else {
+          bytesToWrite = Math.min(sectorSize, length - dataRead);
+          sourceOffset = 24;
+        }
+
+        if (bytesToWrite > 0) {
+          stream.write(sectorData, sourceOffset, bytesToWrite);
+          dataRead += bytesToWrite;
+        }
+
+        sector++;
+        sectorsRead++;
+      }
+
+      return dataRead;
+    } catch (final IOException e) {
       throw new RuntimeException(e);
     }
   }

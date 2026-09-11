@@ -117,3 +117,11 @@
 - Moved the proof renderer's vertex/index submission out of the bridge/backend lifecycle and into the mesh resource.
 - The current proof still uses a small coloured quad; no game geometry or asset format has been changed.
 - Build/test: CI validation pending.
+
+
+## 2026-09-11 — texture-backed mesh boundary
+
+- Added UV-coordinate support to the Android GLES mesh resource.
+- Updated the proof shader and mesh to sample an uploaded RGBA texture while retaining vertex colour modulation.
+- This validates the texture–shader–mesh path without bundling game assets or changing the target resolution.
+- Build/test: CI validation pending; the proof remains the only visible renderer.

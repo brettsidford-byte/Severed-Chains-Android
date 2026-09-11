@@ -16,7 +16,6 @@ import java.util.List;
 
 import legend.core.GamePaths;
 import legend.game.unpacker.Unpacker;
-import legend.game.unpacker.UnpackerException;
 
 public final class MainActivity extends Activity {
     private static final String TAG = "SeveredChains";
@@ -154,7 +153,7 @@ public final class MainActivity extends Activity {
                 }
             }
         }
-        extract.setEnabled(ready);
+        if (extract != null) extract.setEnabled(ready);
     }
 
     private void runExtraction() {
@@ -170,7 +169,7 @@ public final class MainActivity extends Activity {
                     select.setEnabled(true);
                     updateExtractionButton();
                 });
-            } catch (final UnpackerException | RuntimeException exception) {
+            } catch (final RuntimeException exception) {
                 Log.e(TAG, "Severed Chains extraction failed", exception);
                 runOnUiThread(() -> {
                     status.setText("Extraction failed: " + exception.getMessage());

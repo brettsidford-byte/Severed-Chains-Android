@@ -177,8 +177,12 @@ public final class MainActivity extends Activity {
                 }
                 final boolean extractionReady = ready;
                 runOnUiThread(() -> {
+                    if (extractionReady) {
+                        surface.startEngine();
+                    }
                     status.setText(extractionReady
-                        ? BUILD_LABEL + "\nExtraction completed.\n" + AndroidEngineSession.describe()
+                        ? BUILD_LABEL + "\nExtraction completed.\n"
+                            + AndroidEngineSession.describe() + "\n" + surface.engineStatus()
                         : BUILD_LABEL + "\nExtraction stopped before producing its completion marker.\n"
                             + AndroidEngineSession.describe());
                     select.setEnabled(true);

@@ -181,3 +181,12 @@
 - Submits that extracted geometry through the real standard shader and packed uniform buffers.
 - This is intentionally a narrow proof boundary; full primitive decoding, CLUT texture upload, lighting and scene traversal remain to be connected.
 - Build/test: CI validation pending; physical-device execution is still required to confirm the extracted tree contains discoverable TMD files.
+
+
+## 2026-09-11 — first extracted TMD primitive decode
+
+- Extended the real-data bridge to read the first TMD primitive group header.
+- Applied the upstream packet-size rules for triangle/quad, lit, shaded and textured primitive variants.
+- Decoded the first primitive's actual vertex indices and submitted the corresponding extracted geometry.
+- Textured packets are identified but currently rendered through the untextured safety path; CLUT and VRAM texture upload remain next.
+- Build/test: CI validation pending.

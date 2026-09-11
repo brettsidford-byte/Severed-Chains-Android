@@ -33,24 +33,8 @@ public final class AndroidGlesRenderBackend implements AndroidRenderApi {
             + "out vec4 fragmentColour;\\n"
             + "void main() { fragmentColour = vec4(vertexColour, 1.0); }\\n";
 
-        final int vertexShader = compile(GLES30.GL_VERTEX_SHADER, vertexSource);
-        final int fragmentShader = compile(GLES30.GL_FRAGMENT_SHADER, fragmentSource);
-        if (vertexShader == 0 || fragmentShader == 0) return;
-
-        program = GLES30.glCreateProgram();
-        GLES30.glAttachShader(program, vertexShader);
-        GLES30.glAttachShader(program, fragmentShader);
-        GLES30.glLinkProgram(program);
-        final int[] linked = new int[1];
-        GLES30.glGetProgramiv(program, GLES30.GL_LINK_STATUS, linked, 0);
-        GLES30.glDeleteShader(vertexShader);
-        GLES30.glDeleteShader(fragmentShader);
-        if (linked[0] == GLES30.GL_FALSE) {
-            Log.e(TAG, "Android GLES backend link failed: " + GLES30.glGetProgramInfoLog(program));
-            GLES30.glDeleteProgram(program);
-            program = 0;
-            return;
-        }
+        program = AndroidGlesResources.createProgram(vertexSource, fragmentSource);
+        if (program == 0) return;
 
         positionLocation = GLES30.glGetAttribLocation(program, "position");
         colourLocation = GLES30.glGetAttribLocation(program, "colour");
@@ -115,20 +99,6 @@ public final class AndroidGlesRenderBackend implements AndroidRenderApi {
     @Override
     public boolean isReady() {
         return ready;
-    }
-
-    private static int compile(final int type, final String source) {
-        final int shader = GLES30.glCreateShader(type);
-        GLES30.glShaderSource(shader, source);
-        GLES30.glCompileShader(shader);
-        final int[] compiled = new int[1];
-        GLES30.glGetShaderiv(shader, GLES30.GL_COMPILE_STATUS, compiled, 0);
-        if (compiled[0] == GLES30.GL_FALSE) {
-            Log.e(TAG, "Android GLES backend shader failed: " + GLES30.glGetShaderInfoLog(shader));
-            GLES30.glDeleteShader(shader);
-            return 0;
-        }
-        return shader;
     }
 
     private static FloatBuffer directFloats(final float[] values) {

@@ -8,10 +8,13 @@ import android.provider.OpenableColumns;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -123,23 +126,48 @@ public final class GameDataStore {
         writeManifest(new File(target, IMPORTED_FILES), names);
     }
 
-    private void writeManifest(final File manifest, final Set<String> names) {
-        try (FileOutputStream output = new FileOutputStream(manifest, false)) {
-            for (final String name : names) {
-                output.write((name + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            }
-        } catch (IOException ignored) { }
+    private void writeManifest(final File manifest, final Set<String> names) throws IOException {
+        final File temporary = new File(manifest.getParentFile(), manifest.getName() + ".tmp");
+        final StringBuilder contents = new StringBuilder();
+        for (final String name : names) {
+            contents.append(name).append('\n');
+        }
+        Files.writeString(temporary.toPath(), contents.toString(),
+            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+        replaceAtomically(temporary, manifest);
     }
 
     private void copy(final Uri source, final File destination) throws IOException {
+        final File temporary = new File(destination.getParentFile(), destination.getName() + ".part");
+        Files.deleteIfExists(temporary.toPath());
+        long copied = 0;
         try (InputStream input = context.getContentResolver().openInputStream(source);
-             FileOutputStream output = new FileOutputStream(destination, false)) {
+             java.io.OutputStream output = Files.newOutputStream(temporary.toPath(),
+                 StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
             if (input == null) throw new IOException("Unable to open selected game-data file");
             final byte[] buffer = new byte[1024 * 1024];
             int count;
             while ((count = input.read(buffer)) >= 0) {
-                if (count > 0) output.write(buffer, 0, count);
+                if (count > 0) {
+                    output.write(buffer, 0, count);
+                    copied += count;
+                }
             }
+        }
+        if (copied == 0) {
+            Files.deleteIfExists(temporary.toPath());
+            throw new IOException("Selected game-data file was empty");
+        }
+        replaceAtomically(temporary, destination);
+    }
+
+    private void replaceAtomically(final File temporary, final File destination) throws IOException {
+        try {
+            Files.move(temporary.toPath(), destination.toPath(),
+                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (final AtomicMoveNotSupportedException exception) {
+            Files.move(temporary.toPath(), destination.toPath(),
+                StandardCopyOption.REPLACE_EXISTING);
         }
     }
 

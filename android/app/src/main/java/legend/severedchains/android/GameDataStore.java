@@ -4,12 +4,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class GameDataStore {
     private static final String DATA_DIRECTORY = "game-data";
@@ -22,14 +26,31 @@ public final class GameDataStore {
     }
 
     public boolean hasImportedData() {
-        final File directory = new File(context.getFilesDir(), DATA_DIRECTORY);
-        final File manifest = new File(directory, IMPORTED_FILES);
-        return manifest.isFile() && manifest.length() > 0L;
+        return getImportedFileCount() > 0;
+    }
+
+    public int getImportedFileCount() {
+        final File manifest = new File(getDataDirectory(), IMPORTED_FILES);
+        if (!manifest.isFile()) {
+            return 0;
+        }
+        int count = 0;
+        try (BufferedReader reader = new BufferedReader(new FileReader(manifest))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.isBlank() && new File(getDataDirectory(), line).isFile()) {
+                    count++;
+                }
+            }
+        } catch (final IOException ignored) {
+            return 0;
+        }
+        return count;
     }
 
     public List<File> importDocuments(final Intent result) throws IOException {
         final List<File> imported = new ArrayList<>();
-        final File directory = new File(context.getFilesDir(), DATA_DIRECTORY);
+        final File directory = getDataDirectory();
         if (!directory.isDirectory() && !directory.mkdirs()) {
             throw new IOException("Unable to create Android game-data directory");
         }
@@ -44,16 +65,29 @@ public final class GameDataStore {
         }
 
         for (final Uri source : sources) {
-            final String name = safeName(source);
-            final File destination = new File(directory, name);
+            final File destination = new File(directory, safeName(source));
             copy(source, destination);
             imported.add(destination);
         }
 
+        final Set<String> allFiles = new LinkedHashSet<>();
         final File manifest = new File(directory, IMPORTED_FILES);
+        if (manifest.isFile()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(manifest))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (!line.isBlank()) {
+                        allFiles.add(line);
+                    }
+                }
+            }
+        }
+        for (final File file : imported) {
+            allFiles.add(file.getName());
+        }
         try (FileOutputStream output = new FileOutputStream(manifest, false)) {
-            for (final File file : imported) {
-                output.write((file.getName() + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            for (final String name : allFiles) {
+                output.write((name + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
             }
         }
         return imported;

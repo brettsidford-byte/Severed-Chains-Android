@@ -2,20 +2,29 @@ package legend.severedchains.android;
 
 import android.util.Log;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import legend.core.GamePaths;
 
 /**
- * Android-side hand-off between game-data preparation and the future native engine host.
- * This deliberately does not duplicate engine logic: it validates the shared output paths
- * and gives the Activity a single lifecycle boundary to replace the diagnostic surface.
+ * Android-side hand-off between ISO input, the upstream data preparation path,
+ * and the future native renderer/game loop.
  */
 public final class AndroidEngineSession {
     private static final String TAG = "SeveredChains";
 
     private AndroidEngineSession() {
+    }
+
+    public static boolean hasIsoInput() {
+        final File directory = GamePaths.isos().toFile();
+        final File[] files = directory.listFiles(file -> file.isFile());
+        final boolean ready = files != null && files.length >= 4;
+        Log.i(TAG, "ISO input ready=" + ready + ", directory=" + directory
+            + ", fileCount=" + (files == null ? 0 : files.length));
+        return ready;
     }
 
     public static boolean isGameDataReady() {
@@ -30,6 +39,9 @@ public final class AndroidEngineSession {
         if (isGameDataReady()) {
             return "Severed Chains data is ready for the Android engine";
         }
-        return "Severed Chains data is not yet unpacked";
+        if (hasIsoInput()) {
+            return "Severed Chains ISO input is ready; startup preparation will run";
+        }
+        return "Select the four Severed Chains ISO files";
     }
 }

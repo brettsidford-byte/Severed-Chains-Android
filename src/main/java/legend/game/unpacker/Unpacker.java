@@ -547,20 +547,21 @@ public final class Unpacker {
 
   private static FileData readFile(final String filename, final DirectoryEntry entry) throws IOException {
     synchronized(entry.reader()) {
-      final byte[] fileData = entry.reader().readSectors(entry.sector(), entry.length(), filename.endsWith(".IKI") || filename.endsWith(".XA"));
+      final boolean raw = filename.endsWith(".IKI") || filename.endsWith(".XA");
 
       if(Config.lowMemoryUnpacker()) {
         final Path path = ROOT.resolve("tmp").resolve(filename);
+        Files.createDirectories(path.getParent());
 
         if(!Files.exists(path)) {
-          Files.createDirectories(path.getParent());
-          Files.write(path, fileData);
+          final int size = entry.reader().readSectorsToFile(path, entry.sector(), entry.length(), raw);
+          return new FileBackedFileData(path, 0, size);
         }
 
-        return new FileBackedFileData(path, 0, fileData.length);
+        return new FileBackedFileData(path, 0, (int)Files.size(path));
       }
 
-      return new FileData(fileData);
+      return new FileData(entry.reader().readSectors(entry.sector(), entry.length(), raw));
     }
   }
 

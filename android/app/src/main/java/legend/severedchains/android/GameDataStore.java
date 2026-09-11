@@ -2,6 +2,8 @@ package legend.severedchains.android;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.provider.OpenableColumns;
 import android.net.Uri;
 
 import java.io.BufferedReader;
@@ -20,13 +22,25 @@ public final class GameDataStore {
     private static final String IMPORTED_FILES = "imported-files.txt";
 
     private final Context context;
+    private final AndroidStoragePaths paths;
 
     public GameDataStore(final Context context) {
         this.context = context.getApplicationContext();
+        paths = new AndroidStoragePaths(this.context);
     }
 
     public boolean hasImportedData() {
         return getImportedFileCount() > 0;
+    }
+
+    public String getImportSummary() {
+        final List<File> files = listedFiles();
+        if (files.isEmpty()) return "No game-data files imported";
+        long bytes = 0;
+        final StringBuilder summary = new StringBuilder(files.size() + " game-data file(s) available\\n");
+        for (final File file : files) { bytes += file.length(); summary.append(file.getName()).append("\\n"); }
+        summary.append(formatBytes(bytes)).append(" total");
+        return summary.toString();
     }
 
     public int getImportedFileCount() {
@@ -50,7 +64,7 @@ public final class GameDataStore {
 
     public List<File> importDocuments(final Intent result) throws IOException {
         final List<File> imported = new ArrayList<>();
-        final File directory = getDataDirectory();
+        final File directory = paths.gameData();
         if (!directory.isDirectory() && !directory.mkdirs()) {
             throw new IOException("Unable to create Android game-data directory");
         }
@@ -113,9 +127,27 @@ public final class GameDataStore {
         }
     }
 
+    private List<File> listedFiles() {
+        final List<File> files = new ArrayList<>();
+        final File manifest = new File(paths.gameData(), IMPORTED_FILES);
+        if (!manifest.isFile()) return files;
+        try (BufferedReader reader = new BufferedReader(new java.io.FileReader(manifest))) {
+            String line;
+            while ((line = reader.readLine()) != null) if (!line.isBlank()) {
+                final File file = new File(paths.gameData(), line);
+                if (file.isFile()) files.add(file);
+            }
+        } catch (IOException ignored) { }
+        return files;
+    }
+
     private String safeName(final Uri source) {
         final String raw = source.getLastPathSegment();
         final String name = raw == null ? "game-data.bin" : raw.replaceAll("[^A-Za-z0-9._-]", "_");
         return name.isEmpty() ? "game-data.bin" : name;
+    }
+    private String formatBytes(final long bytes) {
+        if (bytes < 1024L * 1024L) return (bytes / 1024L) + " KiB";
+        return String.format(java.util.Locale.ROOT, "%.1f MiB", bytes / (1024.0 * 1024.0));
     }
 }

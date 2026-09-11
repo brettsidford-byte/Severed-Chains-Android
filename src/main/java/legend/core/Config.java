@@ -26,7 +26,7 @@ public final class Config {
   private Config() {
   }
 
-  private static final Path path = Paths.get(".", "config.conf");
+  private static final Path path = GamePaths.configFile();
   private static final SortedStoreProperties properties = new SortedStoreProperties();
 
   static {
@@ -182,7 +182,7 @@ public final class Config {
     final BoolConfigEntry fullScreenConfigEntry = CoreMod.FULLSCREEN_CONFIG.get();
     final boolean isFullScreen = CONFIG.getConfig(fullScreenConfigEntry);
     CONFIG.setConfig(fullScreenConfigEntry, !isFullScreen);
-    ConfigStorage.saveConfig(CONFIG, ConfigStorageLocation.GLOBAL, Path.of("config.dcnf"));
+    ConfigStorage.saveConfig(CONFIG, ConfigStorageLocation.GLOBAL, GamePaths.configDcnf());
   }
 
   private static int readInt(final String key, final int defaultVal, final int min, final int max) {

@@ -20,6 +20,7 @@ public final class MainActivity extends Activity {
 
     private GameDataStore gameDataStore;
     private TextView status;
+    private Button select;
 
     @Override
     protected void onCreate(final Bundle state) {
@@ -41,7 +42,7 @@ public final class MainActivity extends Activity {
             FrameLayout.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.MATCH_PARENT));
 
-        final Button select = new Button(this);
+        select = new Button(this);
         select.setText("Select all four ISO files");
         select.setOnClickListener(view -> selectGameData());
         final FrameLayout.LayoutParams buttonParams = new FrameLayout.LayoutParams(
@@ -71,15 +72,25 @@ public final class MainActivity extends Activity {
         if (requestCode != SELECT_GAME_DATA || resultCode != RESULT_OK || data == null) {
             return;
         }
-        try {
-            final List<java.io.File> imported = gameDataStore.importDocuments(data);
-            Log.i(TAG, "Imported " + imported.size() + " selected file(s); total available="
-                + gameDataStore.getImportedFileCount());
-            status.setText(gameDataStore.getImportSummary());
-        } catch (final IOException exception) {
-            Log.e(TAG, "Game-data import failed", exception);
-            status.setText("Game-data import failed: " + exception.getMessage());
-        }
+        status.setText("Copying game-data into Android storage...\\nPlease keep the app open");
+        select.setEnabled(false);
+        new Thread(() -> {
+            try {
+                final List<java.io.File> imported = gameDataStore.importDocuments(data);
+                Log.i(TAG, "Imported " + imported.size() + " selected file(s); total available="
+                    + gameDataStore.getImportedFileCount());
+                runOnUiThread(() -> {
+                    status.setText(gameDataStore.getImportSummary());
+                    select.setEnabled(true);
+                });
+            } catch (final IOException exception) {
+                Log.e(TAG, "Game-data import failed", exception);
+                runOnUiThread(() -> {
+                    status.setText("Game-data import failed: " + exception.getMessage());
+                    select.setEnabled(true);
+                });
+            }
+        }, "game-data-import").start();
     }
 
     private void updateStatus() {

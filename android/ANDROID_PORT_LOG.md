@@ -134,3 +134,13 @@
 - Added a GL-thread probe compiling the upstream `simple.vsh` and `simple.fsh` pair after adaptation.
 - Geometry-shader assets remain excluded from this initial probe because the target GLES 3.0 context does not expose the desktop geometry stage.
 - Build/test: CI validation pending; actual shader execution still requires the full Severed Chains uniform and mesh setup.
+
+
+## 2026-09-11 — standard shader binding boundary
+
+- Added Android uniform-block binding helpers.
+- Added an Android binding description for the real upstream `standard.vsh`/`standard.fsh` pair.
+- Verified the expected seven vertex attributes: position, normal, UV, texture page, CLUT, colour, and flags.
+- Added bindings for the real `transforms`, `transforms2`, `lighting`, `clutAnimation`, `projectionInfo`, and `scissor` uniform blocks.
+- The GL-thread diagnostic now reports whether this actual shader contract can be created on Android.
+- Build/test: CI validation pending; no claim is made yet about rendering a real game scene.

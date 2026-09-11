@@ -80,7 +80,8 @@ public final class MainActivity extends Activity {
                 Log.i(TAG, "Imported " + imported.size() + " selected file(s); total available="
                     + gameDataStore.getImportedFileCount());
                 runOnUiThread(() -> {
-                    status.setText(gameDataStore.getImportSummary());
+                    status.setText(gameDataStore.getImportSummary() + "\n"
+                        + GameDataInspector.inspect(gameDataStore.getImportedFiles()));
                     select.setEnabled(true);
                 });
             } catch (final IOException exception) {
@@ -96,7 +97,9 @@ public final class MainActivity extends Activity {
     private void updateStatus() {
         final int count = gameDataStore.getImportedFileCount();
         if (count > 0) {
-            status.setText(gameDataStore.getImportSummary() + "\nOpenGL ES 3 surface active");
+            status.setText(gameDataStore.getImportSummary() + "\n"
+                + GameDataInspector.inspect(gameDataStore.getImportedFiles())
+                + "\nOpenGL ES 3 surface active");
         } else {
             status.setText("Select all four ISO files\nOpenGL ES 3 surface active");
         }

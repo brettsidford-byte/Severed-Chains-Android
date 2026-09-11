@@ -3,19 +3,13 @@ package legend.severedchains.android;
 import android.opengl.GLES30;
 import android.util.Log;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.ShortBuffer;
 
 /** Minimal GLES 3 backend proof for the primitives used by the game renderer. */
 public final class AndroidGlesRenderBackend implements AndroidRenderApi {
     private static final String TAG = "SeveredChains";
     private static final int FLOATS_PER_VERTEX = 5;
     private int program;
-    private int vao;
-    private int vbo;
-    private int ebo;
+    private AndroidGlesMesh mesh;
     private int positionLocation;
     private int colourLocation;
     private boolean ready;
@@ -46,31 +40,9 @@ public final class AndroidGlesRenderBackend implements AndroidRenderApi {
             -0.75f,  0.55f, 0.75f, 0.25f, 0.90f
         };
         final short[] indices = {0, 1, 2, 0, 2, 3};
-        final FloatBuffer vertexBuffer = directFloats(vertices);
-        final ShortBuffer indexBuffer = directShorts(indices);
+        mesh = AndroidGlesMesh.createColouredMesh(vertices, indices, positionLocation, colourLocation);
+        if (mesh == null) return;
 
-        final int[] handles = new int[1];
-        GLES30.glGenVertexArrays(1, handles, 0);
-        vao = handles[0];
-        GLES30.glGenBuffers(1, handles, 0);
-        vbo = handles[0];
-        GLES30.glGenBuffers(1, handles, 0);
-
-        GLES30.glBindVertexArray(vao);
-        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vbo);
-        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, vertices.length * Float.BYTES,
-            vertexBuffer, GLES30.GL_STATIC_DRAW);
-        GLES30.glBindBuffer(GLES30.GL_ELEMENT_ARRAY_BUFFER, handles[0]);
-        ebo = handles[0];
-        GLES30.glBufferData(GLES30.GL_ELEMENT_ARRAY_BUFFER, indices.length * Short.BYTES,
-            indexBuffer, GLES30.GL_STATIC_DRAW);
-        GLES30.glEnableVertexAttribArray(positionLocation);
-        GLES30.glVertexAttribPointer(positionLocation, 2, GLES30.GL_FLOAT, false,
-            FLOATS_PER_VERTEX * Float.BYTES, 0);
-        GLES30.glEnableVertexAttribArray(colourLocation);
-        GLES30.glVertexAttribPointer(colourLocation, 3, GLES30.GL_FLOAT, false,
-            FLOATS_PER_VERTEX * Float.BYTES, 2 * Float.BYTES);
-        GLES30.glBindVertexArray(0);
         GLES30.glEnable(GLES30.GL_BLEND);
         GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
         final AndroidGlesFrameBuffer framebufferProbe = AndroidGlesFrameBuffer.create(1, 1, true);
@@ -94,9 +66,7 @@ public final class AndroidGlesRenderBackend implements AndroidRenderApi {
     public void draw() {
         if (!ready) return;
         GLES30.glUseProgram(program);
-        GLES30.glBindVertexArray(vao);
-        GLES30.glDrawElements(GLES30.GL_TRIANGLES, 6, GLES30.GL_UNSIGNED_SHORT, 0);
-        GLES30.glBindVertexArray(0);
+        mesh.draw();
     }
 
     @Override
@@ -104,17 +74,4 @@ public final class AndroidGlesRenderBackend implements AndroidRenderApi {
         return ready;
     }
 
-    private static FloatBuffer directFloats(final float[] values) {
-        final FloatBuffer buffer = ByteBuffer.allocateDirect(values.length * Float.BYTES)
-            .order(ByteOrder.nativeOrder()).asFloatBuffer();
-        buffer.put(values).position(0);
-        return buffer;
-    }
-
-    private static ShortBuffer directShorts(final short[] values) {
-        final ShortBuffer buffer = ByteBuffer.allocateDirect(values.length * Short.BYTES)
-            .order(ByteOrder.nativeOrder()).asShortBuffer();
-        buffer.put(values).position(0);
-        return buffer;
-    }
 }

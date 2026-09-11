@@ -85,3 +85,11 @@
 - CI run 109 failed during Java compilation with missing `org.lwjgl.opengles` and renderer-contract classes.
 - Removed the incomplete source boundary to restore the previously working Android build.
 - The next renderer pass must add an Android-native RenderApi adapter or a deliberately scoped LWJGL-to-GLES compatibility layer; the upstream classes are retained as reference, not claimed as Android-ready.
+
+
+## 2026-09-11 — Android renderer contract boundary
+
+- Added `AndroidRenderApi` as the Android-side rendering lifecycle contract.
+- Routed the existing GLES proof backend and engine render bridge through that contract.
+- Kept the current GLES 3 proof output unchanged while removing direct backend ownership from the bridge.
+- Build/test: CI validation pending; this remains a renderer-platform step and does not yet connect the full Severed Chains `RenderApi`.

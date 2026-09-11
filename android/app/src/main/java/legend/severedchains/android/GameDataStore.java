@@ -136,8 +136,10 @@ public final class GameDataStore {
         for (final String name : names) {
             contents.append(name).append('\n');
         }
-        Files.writeString(temporary.toPath(), contents.toString(),
-            StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+        try (java.io.OutputStream output = Files.newOutputStream(temporary.toPath(),
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+            output.write(contents.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
         replaceAtomically(temporary, manifest);
     }
 

@@ -172,3 +172,12 @@
 - Set the standard shader's live scalar/vector uniforms and draw state.
 - This is the first Android submission through the real Severed Chains standard shader; it remains a controlled probe and is not yet fed by extracted game geometry.
 - Build/test: CI validation pending.
+
+
+## 2026-09-11 — extracted TMD vertex bridge
+
+- Added a minimal Android real-data probe that locates the first extracted `.tmd` file under `GamePaths.files()`.
+- Reads its actual PS1 vertex table and converts three extracted vertices into the upstream 16-float standard-shader layout.
+- Submits that extracted geometry through the real standard shader and packed uniform buffers.
+- This is intentionally a narrow proof boundary; full primitive decoding, CLUT texture upload, lighting and scene traversal remain to be connected.
+- Build/test: CI validation pending; physical-device execution is still required to confirm the extracted tree contains discoverable TMD files.

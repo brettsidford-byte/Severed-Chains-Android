@@ -38,5 +38,5 @@
 - Added an Android GL-thread probe for GLSL ES 3 shaders with uniform blocks, framebuffer objects, and integer textures used by the upstream renderer.
 - The probe records GLES version, renderer, extensions, maximum texture size, and uniform-block capacity in logcat.
 - This is a compatibility validation layer; it does not alter the existing render resolution or claim that the game renderer is connected.
-- Build result: GitHub Actions runs 58 and 59 succeeded.
+- Build result: GitHub Actions runs 58, 59, and final run 61 succeeded. The final revision also corrects framebuffer diagnostic status reporting.
 - Device result: APK is not yet installed/tested on the RG405V for this revision.

@@ -287,6 +287,8 @@
 
 2026-09-11: Added a reusable Android GLES shader-program resource with upstream-style asset loading, uniform setters, uniform-block binding, and idempotent cleanup. Existing diagnostic rendering remains unchanged until the complete RenderApi adapter is assembled.
 
+2026-09-11: Assembled the Android GLES texture, framebuffer, and shader resources behind `AndroidGlesRenderApi`, including GL-context/lifecycle checks, viewport/clear operations, and render-thread ownership. The upstream RenderApi bridge is the next integration layer.
+
 ## 2026-09-11 — Android GLES framebuffer binding safety
 
 - The framebuffer adapter now restores the previously bound framebuffer after creation instead of forcing the default target.

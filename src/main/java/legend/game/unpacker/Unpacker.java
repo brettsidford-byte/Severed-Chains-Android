@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -221,7 +222,8 @@ public final class Unpacker {
 
         final AtomicReference<Throwable> transformationThrowable = new AtomicReference<>();
 
-        try(final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+        final ExecutorService executor = Executors.newCachedThreadPool();
+        try {
           executor.execute(() -> {
             while(!transformations.isEmpty() && transformationThrowable.get() == null) {
               statusListener.accept(I18n.translate("unpacker.transforming_files", transformations.getRemaining()));
@@ -251,6 +253,8 @@ public final class Unpacker {
           }
 
           LOGGER.info("Transformations finished");
+        } finally {
+          shutdownExecutor(executor);
         }
 
         // Check again after the executor has shut down
@@ -305,6 +309,8 @@ public final class Unpacker {
               remaining.decrementAndGet();
             });
           }
+        } finally {
+          shutdownExecutor(executor);
         }
 
         LOGGER.info("Files written in %fs", (System.nanoTime() - writeTime) / 1_000_000_000.0f);
@@ -330,6 +336,20 @@ public final class Unpacker {
       throw new UnpackerException(e);
     } finally {
       FileBackedFileData.closeAll();
+    }
+  }
+
+
+  private static void shutdownExecutor(final ExecutorService executor) {
+    executor.shutdown();
+    try {
+      if(!executor.awaitTermination(7, TimeUnit.DAYS)) {
+        executor.shutdownNow();
+      }
+    } catch(final InterruptedException e) {
+      executor.shutdownNow();
+      Thread.currentThread().interrupt();
+      throw new UnpackerException("Interrupted while waiting for unpacker workers", e);
     }
   }
 

@@ -3,8 +3,8 @@ package legend.severedchains.android;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.provider.OpenableColumns;
 import android.net.Uri;
+import android.provider.OpenableColumns;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 
 public final class GameDataStore {
-    private static final String LEGACY_DIRECTORY = "game-data";\n    private static final String ISO_DIRECTORY = "isos";
     private static final String IMPORTED_FILES = "imported-files.txt";
 
     private final Context context;
@@ -26,7 +25,8 @@ public final class GameDataStore {
 
     public GameDataStore(final Context context) {
         this.context = context.getApplicationContext();
-        paths = new AndroidStoragePaths(this.context);\n        migrateLegacyData();
+        paths = new AndroidStoragePaths(this.context);
+        migrateLegacyData();
     }
 
     public boolean hasImportedData() {
@@ -37,36 +37,24 @@ public final class GameDataStore {
         final List<File> files = listedFiles();
         if (files.isEmpty()) return "No game-data files imported";
         long bytes = 0;
-        final StringBuilder summary = new StringBuilder(files.size() + " game-data file(s) available\\n");
-        for (final File file : files) { bytes += file.length(); summary.append(file.getName()).append("\\n"); }
+        final StringBuilder summary = new StringBuilder(files.size() + " game-data file(s) available\n");
+        for (final File file : files) {
+            bytes += file.length();
+            summary.append(file.getName()).append("\n");
+        }
         summary.append(formatBytes(bytes)).append(" total");
         return summary.toString();
     }
 
     public int getImportedFileCount() {
-        final File manifest = new File(getDataDirectory(), IMPORTED_FILES);
-        if (!manifest.isFile()) {
-            return 0;
-        }
-        int count = 0;
-        try (BufferedReader reader = new BufferedReader(new FileReader(manifest))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (!line.isBlank() && new File(getDataDirectory(), line).isFile()) {
-                    count++;
-                }
-            }
-        } catch (final IOException ignored) {
-            return 0;
-        }
-        return count;
+        return listedFiles().size();
     }
 
     public List<File> importDocuments(final Intent result) throws IOException {
         final List<File> imported = new ArrayList<>();
         final File directory = paths.isos();
         if (!directory.isDirectory() && !directory.mkdirs()) {
-            throw new IOException("Unable to create Android game-data directory");
+            throw new IOException("Unable to create Android isos directory");
         }
 
         final List<Uri> sources = new ArrayList<>();
@@ -90,20 +78,12 @@ public final class GameDataStore {
             try (BufferedReader reader = new BufferedReader(new FileReader(manifest))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    if (!line.isBlank()) {
-                        allFiles.add(line);
-                    }
+                    if (!line.isBlank()) allFiles.add(line);
                 }
             }
         }
-        for (final File file : imported) {
-            allFiles.add(file.getName());
-        }
-        try (FileOutputStream output = new FileOutputStream(manifest, false)) {
-            for (final String name : allFiles) {
-                output.write((name + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            }
-        }
+        for (final File file : imported) allFiles.add(file.getName());
+        writeManifest(manifest, allFiles);
         return imported;
     }
 
@@ -121,6 +101,7 @@ public final class GameDataStore {
         if (!oldManifest.isFile()) return;
         final File target = paths.isos();
         if (!target.isDirectory()) target.mkdirs();
+
         final Set<String> names = new LinkedHashSet<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(oldManifest))) {
             String line;
@@ -139,7 +120,10 @@ public final class GameDataStore {
         } catch (IOException ignored) {
             return;
         }
-        final File manifest = new File(target, IMPORTED_FILES);
+        writeManifest(new File(target, IMPORTED_FILES), names);
+    }
+
+    private void writeManifest(final File manifest, final Set<String> names) {
         try (FileOutputStream output = new FileOutputStream(manifest, false)) {
             for (final String name : names) {
                 output.write((name + "\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
@@ -150,38 +134,42 @@ public final class GameDataStore {
     private void copy(final Uri source, final File destination) throws IOException {
         try (InputStream input = context.getContentResolver().openInputStream(source);
              FileOutputStream output = new FileOutputStream(destination, false)) {
-            if (input == null) {
-                throw new IOException("Unable to open selected game-data file");
-            }
+            if (input == null) throw new IOException("Unable to open selected game-data file");
             final byte[] buffer = new byte[1024 * 1024];
             int count;
             while ((count = input.read(buffer)) >= 0) {
-                if (count > 0) {
-                    output.write(buffer, 0, count);
-                }
+                if (count > 0) output.write(buffer, 0, count);
             }
         }
     }
 
     private List<File> listedFiles() {
         final List<File> files = new ArrayList<>();
-        final File manifest = new File(paths.gameData(), IMPORTED_FILES);
+        final File manifest = new File(paths.isos(), IMPORTED_FILES);
         if (!manifest.isFile()) return files;
-        try (BufferedReader reader = new BufferedReader(new java.io.FileReader(manifest))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(manifest))) {
             String line;
-            while ((line = reader.readLine()) != null) if (!line.isBlank()) {
-                final File file = new File(paths.gameData(), line);
-                if (file.isFile()) files.add(file);
+            while ((line = reader.readLine()) != null) {
+                if (!line.isBlank()) {
+                    final File file = new File(paths.isos(), line);
+                    if (file.isFile()) files.add(file);
+                }
             }
         } catch (IOException ignored) { }
         return files;
     }
 
     private String safeName(final Uri source) {
-        final String raw = source.getLastPathSegment();
+        String raw = null;
+        try (Cursor cursor = context.getContentResolver().query(
+                source, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) raw = cursor.getString(0);
+        } catch (Exception ignored) { }
+        if (raw == null || raw.isBlank()) raw = source.getLastPathSegment();
         final String name = raw == null ? "game-data.bin" : raw.replaceAll("[^A-Za-z0-9._-]", "_");
         return name.isEmpty() ? "game-data.bin" : name;
     }
+
     private String formatBytes(final long bytes) {
         if (bytes < 1024L * 1024L) return (bytes / 1024L) + " KiB";
         return String.format(java.util.Locale.ROOT, "%.1f MiB", bytes / (1024.0 * 1024.0));

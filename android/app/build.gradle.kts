@@ -3,22 +3,12 @@ plugins {
 }
 
 val sharedGamePathsDir = layout.buildDirectory.dir("generated/sharedGamePaths")
-val sharedUnpackerDir = layout.buildDirectory.dir("generated/sharedUnpacker")
 
 val copySharedGamePaths = tasks.register("copySharedGamePaths") {
     doLast {
         copy {
             from("../../src/main/java/legend/core/GamePaths.java")
             into(sharedGamePathsDir.get().asFile.resolve("legend/core"))
-        }
-    }
-}
-
-val copySharedUnpacker = tasks.register("copySharedUnpacker") {
-    doLast {
-        copy {
-            from("../../src/main/java/legend/game/unpacker")
-            into(sharedUnpackerDir.get().asFile.resolve("legend/game/unpacker"))
         }
     }
 }
@@ -48,7 +38,7 @@ android {
 
     sourceSets {
         getByName("main") {
-            java.srcDirs("src/main/java", sharedGamePathsDir, sharedUnpackerDir)
+            java.srcDirs("src/main/java", sharedGamePathsDir)
         }
     }
 
@@ -60,5 +50,4 @@ android {
 
 tasks.named("preBuild") {
     dependsOn(copySharedGamePaths)
-    dependsOn(copySharedUnpacker)
 }

@@ -18,7 +18,7 @@ import legend.core.GamePaths;
 
 public final class MainActivity extends Activity {
     private static final String TAG = "SeveredChains";
-    private static final String BUILD_LABEL = "Android build 0.9.0 atomic ISO import";
+    private static final String BUILD_LABEL = "Android build 1.0.0 automatic startup";
     private static final int SELECT_GAME_DATA = 1001;
 
     private GameDataStore gameDataStore;
@@ -65,6 +65,10 @@ public final class MainActivity extends Activity {
             FrameLayout.LayoutParams.MATCH_PARENT));
         setContentView(root);
         hideSystemUi();
+        if (gameDataStore.getImportedFileCount() >= 4) {
+            surface.startEngine();
+            status.append("\nStarting Severed Chains...");
+        }
     }
 
     @Override
@@ -105,7 +109,9 @@ public final class MainActivity extends Activity {
                 runOnUiThread(() -> {
                     status.setText("ISO files copied to " + gameDataStore.getDataDirectory() + "\n"
                         + gameDataStore.getImportSummary() + "\n"
-                        + GameDataInspector.inspect(gameDataStore.getImportedFiles()));
+                        + GameDataInspector.inspect(gameDataStore.getImportedFiles())
+                        + "\nStarting Severed Chains...");
+                    surface.startEngine();
                     select.setEnabled(true);
                             });
             } catch (final IOException exception) {

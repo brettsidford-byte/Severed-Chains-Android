@@ -274,3 +274,12 @@
 - Removed the separate extraction action from the normal Android interface. The selected ISO files are now treated as the game-data input for Severed Chains startup, matching the desktop program's expected `isos` directory flow.
 - Updated the status screen to show the final ISO directory and clarify that engine startup integration is still pending.
 - Build/test: CI validation pending; the previous RG405V build remains the last physical-device result.
+
+
+## 2026-09-11 — automatic Android startup hand-off
+
+- Changed the Android activity to request engine startup automatically when four ISO files are already present, including immediately after a successful import.
+- The Android engine host now invokes the existing upstream `Unpacker` internally on a worker thread using the configured `GamePaths.isos()` directory.
+- Startup progress and failures are written to logcat; no separate extraction control is exposed to the user.
+- This pass reaches the existing upstream data-preparation boundary, but the full `GameEngine` render loop is still not connected to the Android GLES backend.
+- Build/test: CI validation pending; physical RG405V test required.

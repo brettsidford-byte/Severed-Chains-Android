@@ -107,6 +107,10 @@ public final class GameDataStore {
         return imported;
     }
 
+    public List<File> getImportedFiles() {
+        return listedFiles();
+    }
+
     public File getDataDirectory() {
         return new File(context.getFilesDir(), DATA_DIRECTORY);
     }

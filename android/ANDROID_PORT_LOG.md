@@ -15,3 +15,10 @@
 - Updated config, engine asset/save paths, and the upstream unpacker to use that root.
 - Android now sets `severed.chains.root` to its private app directory before future engine startup.
 - The Android APK still does not launch the engine; SDL/LWJGL/JavaFX dependencies remain to be isolated.
+
+## 2026-09-11 — shared class included in Android source set
+
+- Included the real upstream `legend.core.GamePaths` source in the Android module instead of maintaining an Android duplicate.
+- Android configures that shared class directly at activity startup, so future engine components resolve `isos`, `files`, `saves`, `patches`, `mods`, and configuration under the app's private storage root.
+- Bumped the Android debug build to version `0.3.0`.
+- Build/device result: awaiting the new GitHub Actions build; the RG405V has not yet been retested with this revision.

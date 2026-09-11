@@ -62,6 +62,10 @@ public final class AndroidGlesStandardShader {
         return program;
     }
 
+    public int uniform(final String name) {
+        return GLES30.glGetUniformLocation(program, name);
+    }
+
     public int attribute(final int index) {
         return attributes[index];
     }

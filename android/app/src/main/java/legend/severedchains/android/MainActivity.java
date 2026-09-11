@@ -21,7 +21,6 @@ public final class MainActivity extends Activity {
     private GameDataStore gameDataStore;
     private TextView status;
     private Button select;
-    private Button extract;
 
     @Override
     protected void onCreate(final Bundle state) {
@@ -70,10 +69,9 @@ public final class MainActivity extends Activity {
     @Override
     protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != SELECT_GAME_DATA || resultCode != RESULT_OK || data == null) {
-            return;
-        }
-        status.setText("Copying game-data into Android storage...\\nPlease keep the app open");
+        if (requestCode != SELECT_GAME_DATA || resultCode != RESULT_OK || data == null) return;
+
+        status.setText("Copying game-data into Android isos storage...\nPlease keep the app open");
         select.setEnabled(false);
         new Thread(() -> {
             try {
@@ -84,14 +82,12 @@ public final class MainActivity extends Activity {
                     status.setText(gameDataStore.getImportSummary() + "\n"
                         + GameDataInspector.inspect(gameDataStore.getImportedFiles()));
                     select.setEnabled(true);
-                    extract.setEnabled(true);
                 });
             } catch (final IOException exception) {
                 Log.e(TAG, "Game-data import failed", exception);
                 runOnUiThread(() -> {
                     status.setText("Game-data import failed: " + exception.getMessage());
                     select.setEnabled(true);
-                    extract.setEnabled(gameDataStore.hasImportedData());
                 });
             }
         }, "game-data-import").start();

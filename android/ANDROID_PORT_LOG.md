@@ -40,3 +40,12 @@
 - This is a compatibility validation layer; it does not alter the existing render resolution or claim that the game renderer is connected.
 - Build result: GitHub Actions runs 58, 59, and final run 61 succeeded. The final revision also corrects framebuffer diagnostic status reporting.
 - Device result: APK is not yet installed/tested on the RG405V for this revision.
+
+
+## 2026-09-11 — upstream-compatible ISO preflight
+
+- Replaced Android's loose first-32-MiB string scan with the same PlayStation sector-16 volume-header validation used by the upstream unpacker.
+- Android now validates 2352-byte sector images, `CD001`, `PLAYSTATION`, and the exact four Severed Chains volume IDs.
+- No duplicate extraction or transformation code was added.
+- Build result: GitHub Actions runs 63 and 64 succeeded.
+- The full upstream unpacker remains to be included with its dependency graph before extraction can execute on Android.

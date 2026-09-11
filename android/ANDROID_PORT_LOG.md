@@ -22,3 +22,12 @@
 - Android configures that shared class directly at activity startup, so future engine components resolve `isos`, `files`, `saves`, `patches`, `mods`, and configuration under the app's private storage root.
 - Bumped the Android debug build to version `0.3.0`.
 - Build/device result: awaiting the new GitHub Actions build; the RG405V has not yet been retested with this revision.
+
+
+## 2026-09-11 — Android platform seam and controller state
+
+- Added `PlatformManagerFactory` and changed `GameEngine` to obtain its platform manager through the factory; desktop continues to default to SDL.
+- Added an Android-native controller state adapter for D-pad, face buttons, shoulders, triggers, start/select, and both analogue sticks.
+- Routed handheld gamepad key events through the activity and retained GLES surface diagnostics.
+- The Android module remains intentionally source-limited: the real engine still requires the desktop SDL/LWJGL/JavaFX graph and an Android GLES renderer backend.
+- Build/device result: awaiting Actions validation; no RG405V test has been performed for this revision.

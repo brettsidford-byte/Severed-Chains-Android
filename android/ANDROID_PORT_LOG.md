@@ -153,3 +153,13 @@
   `transforms`, `transforms2`, `lighting`, `clutAnimation`, `projectionInfo`, and `scissor`.
 - This uploads safe zero-filled defaults for binding validation only; it does not yet render a game mesh.
 - Build/test: CI validation pending.
+
+
+## 2026-09-11 — packed standard uniform data
+
+- Replaced zero-filled standard-shader validation buffers with packed std140 defaults.
+- Added identity camera, projection and model transforms.
+- Added a valid default lighting record, CLUT-animation terminator, projection parameters, and a 640×480 scissor rectangle.
+- The GL-thread probe now uploads and binds this structured data before cleanup.
+- These are renderer-layout defaults only; game-state camera, lighting and model values are not yet connected.
+- Build/test: CI validation pending.

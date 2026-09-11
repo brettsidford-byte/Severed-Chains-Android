@@ -3,6 +3,7 @@ package legend.game.unpacker;
 import legend.core.Config;
 import legend.core.DebugHelper;
 import legend.core.IoHelper;
+import legend.core.GamePaths;
 import legend.core.MathHelper;
 import legend.core.Tuple;
 import legend.core.audio.xa.XaTranscoder;
@@ -58,8 +59,8 @@ public final class Unpacker {
   /** Update this any time we make a breaking change */
   private static final int VERSION = 5;
 
-  public static Path ROOT = Path.of(".", "files");
-  public static Path REPLACEMENTS = Path.of(".", "patches", "replacements");
+  public static Path ROOT = GamePaths.files();
+  public static Path REPLACEMENTS = GamePaths.patches().resolve("replacements");
 
   private static final FileData EMPTY_DIRECTORY_SENTINEL = new FileData(new byte[0]);
 
@@ -145,7 +146,7 @@ public final class Unpacker {
   public static void unpack() throws UnpackerException {
     try {
       Files.createDirectories(ROOT);
-      Files.createDirectories(Path.of("./isos"));
+      Files.createDirectories(GamePaths.isos());
 
       if(getUnpackVersion() != VERSION) {
         final long start = System.nanoTime();
@@ -376,7 +377,7 @@ public final class Unpacker {
   private static void getIsoReaders(final IsoReader[] readers, final String[] errors) throws IOException {
     Arrays.fill(errors, I18n.translate("unpacker.disk_not_found"));
 
-    final Path isos = Path.of("isos");
+    final Path isos = GamePaths.isos();
     if(Files.isDirectory(isos)) {
       try(final DirectoryStream<Path> children = Files.newDirectoryStream(isos)) {
         for(final Path child : children) {

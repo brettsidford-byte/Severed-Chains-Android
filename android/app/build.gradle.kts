@@ -3,11 +3,22 @@ plugins {
 }
 
 val sharedGamePathsDir = layout.buildDirectory.dir("generated/sharedGamePaths")
+val sharedUnpackerDir = layout.buildDirectory.dir("generated/sharedUnpacker")
+
 val copySharedGamePaths = tasks.register("copySharedGamePaths") {
     doLast {
         copy {
             from("../../src/main/java/legend/core/GamePaths.java")
             into(sharedGamePathsDir.get().asFile.resolve("legend/core"))
+        }
+    }
+}
+
+val copySharedUnpacker = tasks.register("copySharedUnpacker") {
+    doLast {
+        copy {
+            from("../../src/main/java/legend/game/unpacker")
+            into(sharedUnpackerDir.get().asFile.resolve("legend/game/unpacker"))
         }
     }
 }
@@ -20,8 +31,8 @@ android {
         applicationId = "legend.severedchains.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.3.0-shared-paths"
+        versionCode = 4
+        versionName = "0.4.0-unpacker-source"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -37,7 +48,7 @@ android {
 
     sourceSets {
         getByName("main") {
-            java.srcDirs("src/main/java", sharedGamePathsDir)
+            java.srcDirs("src/main/java", sharedGamePathsDir, sharedUnpackerDir)
         }
     }
 
@@ -49,4 +60,5 @@ android {
 
 tasks.named("preBuild") {
     dependsOn(copySharedGamePaths)
+    dependsOn(copySharedUnpacker)
 }

@@ -9,7 +9,7 @@ import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
 /** Minimal GLES 3 backend proof for the primitives used by the game renderer. */
-public final class AndroidGlesRenderBackend {
+public final class AndroidGlesRenderBackend implements AndroidRenderApi {
     private static final String TAG = "SeveredChains";
     private static final int FLOATS_PER_VERTEX = 5;
     private int program;
@@ -20,6 +20,7 @@ public final class AndroidGlesRenderBackend {
     private int colourLocation;
     private boolean ready;
 
+    @Override
     public void create() {
         final String vertexSource = "#version 300 es\\n"
             + "layout(location=0) in vec2 position;\\n"
@@ -92,8 +93,18 @@ public final class AndroidGlesRenderBackend {
         Log.i(TAG, "Android GLES backend ready=" + ready);
     }
 
-    public void draw() {
+    @Override
+    public void resize(final int width, final int height) {
+        GLES30.glViewport(0, 0, width, height);
+    }
+
+    @Override
+    public void beginFrame() {
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
+    }
+
+    @Override
+    public void draw() {
         if (!ready) return;
         GLES30.glUseProgram(program);
         GLES30.glBindVertexArray(vao);
@@ -101,6 +112,7 @@ public final class AndroidGlesRenderBackend {
         GLES30.glBindVertexArray(0);
     }
 
+    @Override
     public boolean isReady() {
         return ready;
     }

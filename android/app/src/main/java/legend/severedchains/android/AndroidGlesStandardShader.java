@@ -15,12 +15,15 @@ public final class AndroidGlesStandardShader {
 
     private final int program;
     private final int[] attributes;
+    private final boolean attributesReady;
     private final boolean uniformBlocksReady;
 
     private AndroidGlesStandardShader(final int program, final int[] attributes,
+                                      final boolean attributesReady,
                                       final boolean uniformBlocksReady) {
         this.program = program;
         this.attributes = attributes;
+        this.attributesReady = attributesReady;
         this.uniformBlocksReady = uniformBlocksReady;
     }
 
@@ -29,7 +32,7 @@ public final class AndroidGlesStandardShader {
         final String fragment = AndroidGlesShaderSource.load(assets, "gfx/shaders/standard.fsh");
         final int program = AndroidGlesResources.createProgram(vertex, fragment);
         if (program == 0) {
-            return new AndroidGlesStandardShader(0, new int[0], false);
+            return new AndroidGlesStandardShader(0, new int[0], false, false);
         }
 
         final String[] names = {"inPos", "inNorm", "inUv", "inTpage", "inClut", "inColour", "inFlags"};
@@ -51,11 +54,11 @@ public final class AndroidGlesStandardShader {
             Log.e(TAG, "Standard shader bindings incomplete: attributes="
                 + attributesReady + ", blocks=" + blocksReady);
         }
-        return new AndroidGlesStandardShader(program, attributes, ready);
+        return new AndroidGlesStandardShader(program, attributes, attributesReady, blocksReady);
     }
 
     public boolean isReady() {
-        return program != 0 && uniformBlocksReady;
+        return program != 0 && attributesReady && uniformBlocksReady;
     }
 
     public int program() {

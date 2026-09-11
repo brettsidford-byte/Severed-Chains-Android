@@ -266,6 +266,12 @@
 - This keeps the extraction working set near one 2352-byte sector plus transformer buffers instead of a whole member byte array.
 - Build/test: CI validation pending; RG405V retest required.
 
+## 2026-09-11 — Android GLES shader compatibility
+
+- Added Android-only explicit fragment float precision and float-uniform comparison literals when adapting upstream GLSL to GLES 3.0.
+- Standard shader readiness now requires both expected attribute locations and all std140 uniform blocks.
+- Desktop GLSL sources remain unchanged.
+
 
 ## 2026-09-11 — atomic ISO import and normal-flow cleanup
 

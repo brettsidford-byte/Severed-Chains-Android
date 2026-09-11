@@ -8,3 +8,10 @@
 - Improved document naming by using Android's display name where available.
 - Added an import summary showing filenames and total size.
 - This build still contains the GLES surface probe; the desktop SDL/LWJGL engine is not yet connected.
+
+## 2026-09-11 — shared storage-root seam
+
+- Added `legend.core.GamePaths` with a desktop working-directory default and configurable Android root.
+- Updated config, engine asset/save paths, and the upstream unpacker to use that root.
+- Android now sets `severed.chains.root` to its private app directory before future engine startup.
+- The Android APK still does not launch the engine; SDL/LWJGL/JavaFX dependencies remain to be isolated.

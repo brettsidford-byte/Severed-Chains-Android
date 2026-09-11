@@ -73,8 +73,11 @@ public final class AndroidGlesRenderBackend implements AndroidRenderApi {
         GLES30.glBindVertexArray(0);
         GLES30.glEnable(GLES30.GL_BLEND);
         GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
-        ready = GLES30.glGetError() == GLES30.GL_NO_ERROR;
-        Log.i(TAG, "Android GLES backend ready=" + ready);
+        final AndroidGlesFrameBuffer framebufferProbe = AndroidGlesFrameBuffer.create(1, 1, true);
+        final boolean framebufferReady = framebufferProbe.isComplete();
+        framebufferProbe.destroy();
+        ready = GLES30.glGetError() == GLES30.GL_NO_ERROR && framebufferReady;
+        Log.i(TAG, "Android GLES backend ready=" + ready + ", framebuffer=" + framebufferReady);
     }
 
     @Override

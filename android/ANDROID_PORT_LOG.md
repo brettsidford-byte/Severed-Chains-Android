@@ -163,3 +163,12 @@
 - The GL-thread probe now uploads and binds this structured data before cleanup.
 - These are renderer-layout defaults only; game-state camera, lighting and model values are not yet connected.
 - Build/test: CI validation pending.
+
+
+## 2026-09-11 — standard-shader mesh submission boundary
+
+- Added the actual 16-float Severed Chains vertex layout to the Android mesh resource.
+- The GL-thread probe now submits indexed mesh data with position, normal, UV, texture-page, CLUT, colour and flags attributes.
+- Set the standard shader's live scalar/vector uniforms and draw state.
+- This is the first Android submission through the real Severed Chains standard shader; it remains a controlled probe and is not yet fed by extracted game geometry.
+- Build/test: CI validation pending.

@@ -62,6 +62,49 @@ public final class AndroidGlesMesh {
         return new AndroidGlesMesh(vao, vbo, ebo, indices.length);
     }
 
+    public static AndroidGlesMesh createTexturedMesh(final float[] vertices, final short[] indices,
+                                                      final int positionLocation,
+                                                      final int colourLocation,
+                                                      final int textureLocation) {
+        final FloatBuffer vertexBuffer = directFloats(vertices);
+        final ShortBuffer indexBuffer = directShorts(indices);
+        final int[] handles = new int[1];
+
+        GLES30.glGenVertexArrays(1, handles, 0);
+        final int vao = handles[0];
+        GLES30.glGenBuffers(1, handles, 0);
+        final int vbo = handles[0];
+        GLES30.glGenBuffers(1, handles, 0);
+        final int ebo = handles[0];
+
+        GLES30.glBindVertexArray(vao);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vbo);
+        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, vertices.length * Float.BYTES,
+            vertexBuffer, GLES30.GL_STATIC_DRAW);
+        GLES30.glBindBuffer(GLES30.GL_ELEMENT_ARRAY_BUFFER, ebo);
+        GLES30.glBufferData(GLES30.GL_ELEMENT_ARRAY_BUFFER, indices.length * Short.BYTES,
+            indexBuffer, GLES30.GL_STATIC_DRAW);
+
+        GLES30.glEnableVertexAttribArray(positionLocation);
+        GLES30.glVertexAttribPointer(positionLocation, 2, GLES30.GL_FLOAT, false,
+            7 * Float.BYTES, 0);
+        GLES30.glEnableVertexAttribArray(colourLocation);
+        GLES30.glVertexAttribPointer(colourLocation, 3, GLES30.GL_FLOAT, false,
+            7 * Float.BYTES, 2 * Float.BYTES);
+        GLES30.glEnableVertexAttribArray(textureLocation);
+        GLES30.glVertexAttribPointer(textureLocation, 2, GLES30.GL_FLOAT, false,
+            7 * Float.BYTES, 5 * Float.BYTES);
+        GLES30.glBindVertexArray(0);
+
+        if (GLES30.glGetError() != GLES30.GL_NO_ERROR) {
+            GLES30.glDeleteVertexArrays(1, new int[]{vao}, 0);
+            GLES30.glDeleteBuffers(1, new int[]{vbo}, 0);
+            GLES30.glDeleteBuffers(1, new int[]{ebo}, 0);
+            return null;
+        }
+        return new AndroidGlesMesh(vao, vbo, ebo, indices.length);
+    }
+
     public void draw() {
         GLES30.glBindVertexArray(vao);
         GLES30.glDrawElements(GLES30.GL_TRIANGLES, indexCount, GLES30.GL_UNSIGNED_SHORT, 0);

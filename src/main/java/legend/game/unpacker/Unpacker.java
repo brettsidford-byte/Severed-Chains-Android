@@ -4,6 +4,7 @@ import legend.core.Config;
 import legend.core.DebugHelper;
 import legend.core.IoHelper;
 import legend.core.GamePaths;
+import legend.core.GamePaths;
 import legend.core.MathHelper;
 import legend.core.Tuple;
 import legend.core.audio.xa.XaTranscoder;

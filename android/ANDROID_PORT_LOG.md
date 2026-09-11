@@ -109,3 +109,11 @@
 - Added framebuffer completeness validation and lifecycle cleanup.
 - The GLES proof backend now creates and validates a 1×1 off-screen target on the GL thread without changing the visible proof output.
 - Build/test: CI validation pending; physical-device framebuffer behaviour remains to be checked on the RG405V.
+
+
+## 2026-09-11 — GLES mesh and indexed-buffer boundary
+
+- Added an Android GLES mesh resource owning VAO, vertex buffer, index buffer, attribute layout, indexed drawing, and cleanup.
+- Moved the proof renderer's vertex/index submission out of the bridge/backend lifecycle and into the mesh resource.
+- The current proof still uses a small coloured quad; no game geometry or asset format has been changed.
+- Build/test: CI validation pending.

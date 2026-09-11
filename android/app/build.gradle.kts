@@ -6,6 +6,7 @@ val sharedGamePathsDir = layout.buildDirectory.dir("generated/sharedGamePaths")
 val sharedIsoReaderDir = layout.buildDirectory.dir("generated/sharedIsoReader")
 val sharedFileDataDir = layout.buildDirectory.dir("generated/sharedFileData")
 val sharedFileDataSupportDir = layout.buildDirectory.dir("generated/sharedFileDataSupport")
+val sharedUnpackerStructureDir = layout.buildDirectory.dir("generated/sharedUnpackerStructure")
 
 val copySharedGamePaths = tasks.register("copySharedGamePaths") {
     doLast {
@@ -57,6 +58,21 @@ val copySharedFileDataSupport = tasks.register("copySharedFileDataSupport") {
     }
 }
 
+val copySharedUnpackerStructure = tasks.register("copySharedUnpackerStructure") {
+    doLast {
+        copy {
+            from(
+                "../../src/main/java/legend/game/unpacker/DirectoryEntry.java",
+                "../../src/main/java/legend/game/unpacker/FileMap.java",
+                "../../src/main/java/legend/game/unpacker/PathNode.java",
+                "../../src/main/java/legend/game/unpacker/UnpackerException.java",
+                "../../src/main/java/legend/game/unpacker/UnpackerStoppedRuntimeException.java"
+            )
+            into(sharedUnpackerStructureDir.get().asFile.resolve("legend/game/unpacker"))
+        }
+    }
+}
+
 android {
     namespace = "legend.severedchains.android"
     compileSdk = 35
@@ -65,8 +81,8 @@ android {
         applicationId = "legend.severedchains.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.5.0-file-data"
+        versionCode = 6
+        versionName = "0.6.0-unpacker-structure"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -93,7 +109,8 @@ android {
                 sharedGamePathsDir,
                 sharedIsoReaderDir,
                 sharedFileDataDir,
-                sharedFileDataSupportDir
+                sharedFileDataSupportDir,
+                sharedUnpackerStructureDir
             )
         }
     }
@@ -114,4 +131,5 @@ tasks.named("preBuild") {
     dependsOn(copySharedIsoReader)
     dependsOn(copySharedFileData)
     dependsOn(copySharedFileDataSupport)
+    dependsOn(copySharedUnpackerStructure)
 }

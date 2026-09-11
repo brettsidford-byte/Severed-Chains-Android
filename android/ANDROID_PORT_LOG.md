@@ -230,3 +230,11 @@
 - Bumped the Android version to 0.8.0 and added a visible build label to the status screen.
 - This makes it possible to confirm that the replacement APK has actually updated the installed application before testing extraction.
 - Build/test: CI validation pending.
+
+
+## 2026-09-11 — enable Android low-memory unpacker mode
+
+- Found the cause of the repeated incomplete extraction: the Android Config shim always returned `false` for `lowMemoryUnpacker()` and ignored the enable call.
+- Changed the Android shim to use file-backed low-memory extraction from the first pass and to retain the enabled state.
+- This avoids the desktop in-memory strategy that exceeds the RG405V application heap.
+- Build/test: CI validation pending; device retest required.

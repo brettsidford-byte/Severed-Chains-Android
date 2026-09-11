@@ -135,7 +135,7 @@ public final class MainActivity extends Activity {
         if (count > 0) {
             status.setText(gameDataStore.getImportSummary() + "\n"
                 + GameDataInspector.inspect(gameDataStore.getImportedFiles())
-                + "\nOpenGL ES 3 surface active");
+                + "\n" + AndroidEngineSession.describe());
         } else {
             status.setText("Select all four ISO files\nOpenGL ES 3 surface active");
         }
@@ -164,7 +164,7 @@ public final class MainActivity extends Activity {
             try {
                 Unpacker.unpack();
                 runOnUiThread(() -> {
-                    status.setText("Extraction completed.\\nSevered Chains files are ready.");
+                    status.setText("Extraction completed.\\n" + AndroidEngineSession.describe());
                     select.setEnabled(true);
                     updateExtractionButton();
                 });

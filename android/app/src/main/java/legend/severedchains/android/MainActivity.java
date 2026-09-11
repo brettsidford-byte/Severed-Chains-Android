@@ -39,7 +39,7 @@ public final class MainActivity extends Activity {
             FrameLayout.LayoutParams.MATCH_PARENT));
 
         final Button select = new Button(this);
-        select.setText("Select game data");
+        select.setText("Select all four ISO files");
         select.setOnClickListener(view -> selectGameData());
         final FrameLayout.LayoutParams buttonParams = new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT,
@@ -70,17 +70,20 @@ public final class MainActivity extends Activity {
         }
         try {
             final List<java.io.File> imported = gameDataStore.importDocuments(data);
-            status.setText(imported.size() + " game-data file(s) imported");
+            status.setText(gameDataStore.getImportedFileCount()
+                + " game-data file(s) available\n"
+                + imported.size() + " imported in this selection");
         } catch (final IOException exception) {
             status.setText("Game-data import failed: " + exception.getMessage());
         }
     }
 
     private void updateStatus() {
-        if (gameDataStore.hasImportedData()) {
-            status.setText("Game data imported\nOpenGL ES 3 surface active");
+        final int count = gameDataStore.getImportedFileCount();
+        if (count > 0) {
+            status.setText(count + " game-data file(s) available\nOpenGL ES 3 surface active");
         } else {
-            status.setText("OpenGL ES 3 surface active\nSelect your legally owned game data");
+            status.setText("Select all four ISO files\nOpenGL ES 3 surface active");
         }
     }
 

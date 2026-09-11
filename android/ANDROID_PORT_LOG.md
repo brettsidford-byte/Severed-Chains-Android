@@ -289,6 +289,8 @@
 
 2026-09-11: Assembled the Android GLES texture, framebuffer, and shader resources behind `AndroidGlesRenderApi`, including GL-context/lifecycle checks, viewport/clear operations, and render-thread ownership. The upstream RenderApi bridge is the next integration layer.
 
+2026-09-11: Corrected Android shader adaptation: integer `translucencyMode` comparisons remain integer comparisons, while float uniforms retain GLES-compatible literals. Normalised the ES version prologue and added explicit float/int precision defaults for stricter Android drivers. Fixed the precision prologue to insert real newlines rather than literal escape text. Device retest required.
+
 ## 2026-09-11 — Android GLES framebuffer binding safety
 
 - The framebuffer adapter now restores the previously bound framebuffer after creation instead of forcing the default target.

@@ -3,15 +3,17 @@ package legend.severedchains.android;
 import android.opengl.GLES30;
 import android.util.Log;
 
+import java.nio.ByteBuffer;
 
 /** Minimal GLES 3 backend proof for the primitives used by the game renderer. */
 public final class AndroidGlesRenderBackend implements AndroidRenderApi {
     private static final String TAG = "SeveredChains";
-    private static final int FLOATS_PER_VERTEX = 5;
     private int program;
     private AndroidGlesMesh mesh;
     private int positionLocation;
     private int colourLocation;
+    private int textureLocation;
+    private int texture;
     private boolean ready;
 
     @Override
@@ -19,29 +21,43 @@ public final class AndroidGlesRenderBackend implements AndroidRenderApi {
         final String vertexSource = "#version 300 es\\n"
             + "layout(location=0) in vec2 position;\\n"
             + "layout(location=1) in vec3 colour;\\n"
+            + "layout(location=2) in vec2 texCoord;\\n"
             + "out vec3 vertexColour;\\n"
-            + "void main() { gl_Position = vec4(position, 0.0, 1.0); vertexColour = colour; }\\n";
+            + "out vec2 vertexTexCoord;\\n"
+            + "void main() { gl_Position = vec4(position, 0.0, 1.0); vertexColour = colour; vertexTexCoord = texCoord; }\\n";
         final String fragmentSource = "#version 300 es\\n"
             + "precision mediump float;\\n"
             + "in vec3 vertexColour;\\n"
+            + "in vec2 vertexTexCoord;\\n"
+            + "uniform sampler2D albedo;\\n"
             + "out vec4 fragmentColour;\\n"
-            + "void main() { fragmentColour = vec4(vertexColour, 1.0); }\\n";
+            + "void main() { fragmentColour = texture(albedo, vertexTexCoord) * vec4(vertexColour, 1.0); }\\n";
 
         program = AndroidGlesResources.createProgram(vertexSource, fragmentSource);
         if (program == 0) return;
 
         positionLocation = GLES30.glGetAttribLocation(program, "position");
         colourLocation = GLES30.glGetAttribLocation(program, "colour");
+        textureLocation = GLES30.glGetAttribLocation(program, "texCoord");
 
         final float[] vertices = {
-            -0.75f, -0.55f, 0.15f, 0.50f, 0.95f,
-             0.75f, -0.55f, 0.20f, 0.85f, 0.35f,
-             0.75f,  0.55f, 0.95f, 0.65f, 0.15f,
-            -0.75f,  0.55f, 0.75f, 0.25f, 0.90f
+            -0.75f, -0.55f, 0.15f, 0.50f, 0.95f, 0.0f, 1.0f,
+             0.75f, -0.55f, 0.20f, 0.85f, 0.35f, 1.0f, 1.0f,
+             0.75f,  0.55f, 0.95f, 0.65f, 0.15f, 1.0f, 0.0f,
+            -0.75f,  0.55f, 0.75f, 0.25f, 0.90f, 0.0f, 0.0f
         };
         final short[] indices = {0, 1, 2, 0, 2, 3};
-        mesh = AndroidGlesMesh.createColouredMesh(vertices, indices, positionLocation, colourLocation);
+        mesh = AndroidGlesMesh.createTexturedMesh(vertices, indices, positionLocation,
+            colourLocation, textureLocation);
         if (mesh == null) return;
+
+        final ByteBuffer pixels = ByteBuffer.allocateDirect(16);
+        for (int i = 0; i < 4; i++) {
+            pixels.put((byte) 255).put((byte) 255).put((byte) 255).put((byte) 255);
+        }
+        pixels.position(0);
+        texture = AndroidGlesResources.createRgbaTexture(pixels, 2, 2, false);
+        if (texture == 0) return;
 
         GLES30.glEnable(GLES30.GL_BLEND);
         GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
@@ -66,6 +82,9 @@ public final class AndroidGlesRenderBackend implements AndroidRenderApi {
     public void draw() {
         if (!ready) return;
         GLES30.glUseProgram(program);
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texture);
+        GLES30.glUniform1i(GLES30.glGetUniformLocation(program, "albedo"), 0);
         mesh.draw();
     }
 

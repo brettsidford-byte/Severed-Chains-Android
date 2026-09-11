@@ -291,6 +291,8 @@
 
 2026-09-11: Corrected Android shader adaptation: integer `translucencyMode` comparisons remain integer comparisons, while float uniforms retain GLES-compatible literals. Normalised the ES version prologue and added explicit float/int precision defaults for stricter Android drivers. Fixed the precision prologue to insert real newlines rather than literal escape text. Device retest required.
 
+2026-09-11: Corrected the inline GLES diagnostic backend shader strings, which had the same literal-escape newline defect as the asset adapter. The diagnostic primitive now supplies valid line-separated ES 3 shader source; no intermediate APK installation performed.
+
 ## 2026-09-11 — Android GLES framebuffer binding safety
 
 - The framebuffer adapter now restores the previously bound framebuffer after creation instead of forcing the default target.

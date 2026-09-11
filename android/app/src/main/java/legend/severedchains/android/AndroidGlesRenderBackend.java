@@ -18,20 +18,20 @@ public final class AndroidGlesRenderBackend implements AndroidRenderApi {
 
     @Override
     public void create() {
-        final String vertexSource = "#version 300 es\\n"
-            + "layout(location=0) in vec2 position;\\n"
-            + "layout(location=1) in vec3 colour;\\n"
-            + "layout(location=2) in vec2 texCoord;\\n"
-            + "out vec3 vertexColour;\\n"
-            + "out vec2 vertexTexCoord;\\n"
-            + "void main() { gl_Position = vec4(position, 0.0, 1.0); vertexColour = colour; vertexTexCoord = texCoord; }\\n";
-        final String fragmentSource = "#version 300 es\\n"
-            + "precision mediump float;\\n"
-            + "in vec3 vertexColour;\\n"
-            + "in vec2 vertexTexCoord;\\n"
-            + "uniform sampler2D albedo;\\n"
-            + "out vec4 fragmentColour;\\n"
-            + "void main() { fragmentColour = texture(albedo, vertexTexCoord) * vec4(vertexColour, 1.0); }\\n";
+        final String vertexSource = "#version 300 es\n"
+            + "layout(location=0) in vec2 position;\n"
+            + "layout(location=1) in vec3 colour;\n"
+            + "layout(location=2) in vec2 texCoord;\n"
+            + "out vec3 vertexColour;\n"
+            + "out vec2 vertexTexCoord;\n"
+            + "void main() { gl_Position = vec4(position, 0.0, 1.0); vertexColour = colour; vertexTexCoord = texCoord; }\n";
+        final String fragmentSource = "#version 300 es\n"
+            + "precision mediump float;\n"
+            + "in vec3 vertexColour;\n"
+            + "in vec2 vertexTexCoord;\n"
+            + "uniform sampler2D albedo;\n"
+            + "out vec4 fragmentColour;\n"
+            + "void main() { fragmentColour = texture(albedo, vertexTexCoord) * vec4(vertexColour, 1.0); }\n";
 
         program = AndroidGlesResources.createProgram(vertexSource, fragmentSource);
         if (program == 0) return;

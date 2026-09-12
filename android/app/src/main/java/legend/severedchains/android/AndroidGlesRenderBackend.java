@@ -93,4 +93,21 @@ public final class AndroidGlesRenderBackend implements AndroidRenderApi {
         return ready;
     }
 
+    @Override
+    public void destroy() {
+        if (mesh != null) {
+            mesh.destroy();
+            mesh = null;
+        }
+        if (texture != 0) {
+            AndroidGlesResources.deleteTexture(texture);
+            texture = 0;
+        }
+        if (program != 0) {
+            GLES30.glDeleteProgram(program);
+            program = 0;
+        }
+        ready = false;
+    }
+
 }

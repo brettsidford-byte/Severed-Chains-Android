@@ -3,6 +3,9 @@ package legend.severedchains.android;
 import android.opengl.GLES30;
 
 import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 
 /**
  * Android GLES texture resource used by the renderer adapter.
@@ -87,6 +90,19 @@ public final class AndroidGlesTextureResource {
         bind(0);
         GLES30.glTexSubImage2D(GLES30.GL_TEXTURE_2D, 0, x, y, width, height,
             format.external, format.type, data);
+    }
+
+    /** Uploads packed integer texture data using the upstream texture API shape. */
+    public void update(final int x, final int y, final int width, final int height,
+                       final int[] data) {
+        if (data == null) throw new IllegalArgumentException("Texture data must not be null");
+        if ((long) width * height > data.length) {
+            throw new IllegalArgumentException("Texture data is smaller than the update region");
+        }
+        final IntBuffer buffer = ByteBuffer.allocateDirect(data.length * Integer.BYTES)
+            .order(ByteOrder.nativeOrder()).asIntBuffer();
+        buffer.put(data).position(0);
+        update(x, y, width, height, buffer);
     }
 
     public int id() {

@@ -357,3 +357,33 @@
 - The RG405V reached the upstream Chester texture replacement with a missing `260/textures/4` node and crashed with a `NullPointerException`.
 - The replacement now checks each archive path before replacing it and logs a skip when the target is absent; normal replacement behaviour is unchanged when the target exists.
 - Build/test: CI validation pending; RG405V retest required.
+
+## 2026-09-12 — preserve the logical 640x480 render area
+
+- Android GLES surface resizing now computes a centered 4:3 viewport from the physical surface dimensions.
+- This preserves the game's original 640x480 composition on landscape handheld displays instead of stretching the diagnostic or future real renderer output.
+- Desktop rendering and game logic are unchanged.
+- Build/test: Android compilation required.
+- Build/test: local Android build required; device validation deferred until the real engine renderer is connected.
+
+## 2026-09-12 — release GLES resources across surface lifecycle changes
+
+- Added an explicit Android render-bridge teardown path for EGL surface loss and activity pause.
+- The diagnostic backend now releases its mesh, texture, and shader program and can be recreated on the next surface.
+- This lifecycle seam will also be used by the real renderer when it replaces the diagnostic bridge.
+- Desktop rendering and game logic are unchanged.
+
+## 2026-09-12 — begin upstream Mesh contract integration
+
+- Added the upstream `Mesh` and `Translucency` contracts to the Android source set.
+- Android GLES meshes now expose the upstream lifecycle, attribute, metadata, and indexed-range methods.
+- Desktop rendering and game logic are unchanged.
+- Build/test: Android compilation required.
+
+## 2026-09-12 — support integer texture uploads
+
+- Android GLES texture resources now accept packed `int[]` updates in addition to buffer-backed uploads.
+- The data-size and texture-bounds checks remain enforced before issuing GLES calls.
+- This matches the upstream texture API required by the eventual Android RenderApi adapter.
+- Desktop rendering and game logic are unchanged.
+- Build/test: Android compilation required.

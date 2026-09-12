@@ -1,6 +1,8 @@
 package legend.severedchains.android;
 
 import android.opengl.GLES30;
+import legend.core.renderer.Mesh;
+import legend.core.renderer.Translucency;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -9,7 +11,7 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 /** Interleaved GLES vertex/index mesh owned by the Android render thread. */
-public final class AndroidGlesMesh {
+public final class AndroidGlesMesh implements Mesh {
     private static final int FLOATS_PER_VERTEX = 5;
 
     private final int vao;
@@ -17,6 +19,8 @@ public final class AndroidGlesMesh {
     private final int ebo;
     private final int indexCount;
     private final boolean intIndices;
+    private float[] vertexData;
+    private boolean textured;
 
     private AndroidGlesMesh(final int vao, final int vbo, final int ebo, final int indexCount) {
         this(vao, vbo, ebo, indexCount, false);
@@ -210,7 +214,10 @@ public final class AndroidGlesMesh {
             GLES30.glDeleteBuffers(1, new int[]{ebo}, 0);
             return null;
         }
-        return new AndroidGlesMesh(vao, vbo, ebo, indices.length);
+        final AndroidGlesMesh mesh = new AndroidGlesMesh(vao, vbo, ebo, indices.length);
+        mesh.vertexData = vertices.clone();
+        mesh.textured = true;
+        return mesh;
     }
 
     /** Uploads the complete vertex stream for dynamic/streaming meshes. */
@@ -243,6 +250,51 @@ public final class AndroidGlesMesh {
         GLES30.glDrawElements(primitiveMode, count,
             intIndices ? GLES30.GL_UNSIGNED_INT : GLES30.GL_UNSIGNED_SHORT, offset);
         GLES30.glBindVertexArray(0);
+    }
+
+    @Override
+    public void update() {
+    }
+
+    @Override
+    public void delete() {
+        destroy();
+    }
+
+    @Override
+    public void attribute(final int index, final long offset, final int size, final int stride) {
+        if (offset < 0 || offset > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Android GLES attribute offset is outside the supported range");
+        }
+        GLES30.glBindVertexArray(vao);
+        GLES30.glEnableVertexAttribArray(index);
+        GLES30.glVertexAttribPointer(index, size, GLES30.GL_FLOAT, false, stride, (int) offset);
+        GLES30.glBindVertexArray(0);
+    }
+
+    @Override
+    public void draw(final int start, final int count) {
+        drawRange(GLES30.GL_TRIANGLES, start, count);
+    }
+
+    @Override
+    public float[] vertices() {
+        return vertexData == null ? null : vertexData.clone();
+    }
+
+    @Override
+    public boolean textured() {
+        return textured;
+    }
+
+    @Override
+    public boolean translucent() {
+        return false;
+    }
+
+    @Override
+    public Translucency translucencyMode() {
+        return null;
     }
 
     public void destroy() {

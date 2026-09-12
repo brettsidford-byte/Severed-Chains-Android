@@ -77,6 +77,12 @@ public final class SeveredChainsSurfaceView extends GLSurfaceView {
         renderer.setLastInput(engineHost.describe());
     }
 
+    @Override
+    public void onPause() {
+        queueEvent(engineBridge::onSurfaceDestroyed);
+        super.onPause();
+    }
+
     public String engineStatus() {
         return engineHost.describe();
     }

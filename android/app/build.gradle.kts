@@ -9,6 +9,19 @@ val sharedFileDataSupportDir = layout.buildDirectory.dir("generated/sharedFileDa
 val sharedUnpackerStructureDir = layout.buildDirectory.dir("generated/sharedUnpackerStructure")
 val sharedUnpackerOrchestrationDir = layout.buildDirectory.dir("generated/sharedUnpackerOrchestration")
 val sharedShaderAssetsDir = layout.buildDirectory.dir("generated/sharedShaderAssets")
+val sharedMeshContractDir = layout.buildDirectory.dir("generated/sharedMeshContract")
+
+val copySharedMeshContract = tasks.register("copySharedMeshContract") {
+    doLast {
+        copy {
+            from(
+                "../../src/main/java/legend/core/renderer/Mesh.java",
+                "../../src/main/java/legend/core/renderer/Translucency.java"
+            )
+            into(sharedMeshContractDir.get().asFile.resolve("legend/core/renderer"))
+        }
+    }
+}
 
 val copySharedGamePaths = tasks.register("copySharedGamePaths") {
     doLast {
@@ -137,7 +150,8 @@ android {
                 sharedFileDataDir,
                 sharedFileDataSupportDir,
                 sharedUnpackerStructureDir,
-                sharedUnpackerOrchestrationDir
+                sharedUnpackerOrchestrationDir,
+                sharedMeshContractDir
             )
             assets.srcDirs(sharedShaderAssetsDir)
         }
@@ -164,4 +178,5 @@ tasks.named("preBuild") {
     dependsOn(copySharedUnpackerStructure)
     dependsOn(copySharedUnpackerOrchestration)
     dependsOn(copySharedShaderAssets)
+    dependsOn(copySharedMeshContract)
 }

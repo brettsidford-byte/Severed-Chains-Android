@@ -10,6 +10,7 @@ import legend.core.renderer.Obj;
 import legend.core.renderer.QuadBuilder;
 import legend.core.platform.input.InputAction;
 import legend.core.platform.input.InputCodepoints;
+import legend.core.platform.input.InputActionNames;
 import legend.game.inventory.screens.FontOptions;
 import legend.game.inventory.screens.TextColour;
 import legend.game.modding.coremod.CoreMod;
@@ -1638,7 +1639,7 @@ public final class Text {
       String str = String.valueOf(InputCodepoints.getCodepoint(PLATFORM.getGamepadType(), LodString.fromLodChar(chr.char_06)));
 
       if((str.charAt(0) & 0xff00) == InputCodepoints.TEXTBOX_INPUT_ACTION) {
-        str = InputCodepoints.getActionName(textboxText.inputActions.get(str.charAt(0) & 0xff));
+        str = InputActionNames.getActionName(textboxText.inputActions.get(str.charAt(0) & 0xff));
       }
 
       //LAB_8002835c

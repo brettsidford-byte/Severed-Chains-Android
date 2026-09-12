@@ -1,6 +1,7 @@
 package legend.severedchains.android;
 
 import android.opengl.GLES30;
+import android.opengl.GLES32;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
@@ -13,19 +14,29 @@ public final class AndroidGlesResources {
     }
 
     public static int createProgram(final String vertexSource, final String fragmentSource) {
+        return createProgram(vertexSource, null, fragmentSource);
+    }
+
+    public static int createProgram(final String vertexSource, final String geometrySource,
+                                    final String fragmentSource) {
         final int vertex = compileShader(GLES30.GL_VERTEX_SHADER, vertexSource);
+        final int geometry = geometrySource == null ? 0
+            : compileShader(GLES32.GL_GEOMETRY_SHADER, geometrySource);
         final int fragment = compileShader(GLES30.GL_FRAGMENT_SHADER, fragmentSource);
-        if (vertex == 0 || fragment == 0) {
+        if (vertex == 0 || (geometrySource != null && geometry == 0) || fragment == 0) {
             if (vertex != 0) GLES30.glDeleteShader(vertex);
+            if (geometry != 0) GLES30.glDeleteShader(geometry);
             if (fragment != 0) GLES30.glDeleteShader(fragment);
             return 0;
         }
 
         final int program = GLES30.glCreateProgram();
         GLES30.glAttachShader(program, vertex);
+        if (geometry != 0) GLES30.glAttachShader(program, geometry);
         GLES30.glAttachShader(program, fragment);
         GLES30.glLinkProgram(program);
         GLES30.glDeleteShader(vertex);
+        if (geometry != 0) GLES30.glDeleteShader(geometry);
         GLES30.glDeleteShader(fragment);
 
         final int[] linked = new int[1];

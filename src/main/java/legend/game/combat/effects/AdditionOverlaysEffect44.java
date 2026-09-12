@@ -8,7 +8,7 @@ import legend.core.memory.Method;
 import legend.core.renderer.Obj;
 import legend.core.renderer.QuadBuilder;
 import legend.core.platform.input.InputAction;
-import legend.core.platform.input.InputCodepoints;
+import legend.core.platform.input.InputActionNames;
 import legend.game.additions.AdditionHitProperties10;
 import legend.game.additions.AdditionSound;
 import legend.game.combat.bent.BattleEntity27c;
@@ -203,7 +203,7 @@ public class AdditionOverlaysEffect44 implements Effect<EffectManagerParams.Void
   /** Runs callbacks to render correct button icon effects during addition */
   @Method(0x80106050L)
   private void renderAdditionButton(final int frames, final boolean isCounter) {
-    renderText(InputCodepoints.getActionName(isCounter ? INPUT_ACTION_BTTL_COUNTER.get() : INPUT_ACTION_BTTL_ATTACK.get()), GPU.getOffsetX() + 124.5f, GPU.getOffsetY() + 56.0f, UI_WHITE_SHADOWED);
+    renderText(InputActionNames.getActionName(isCounter ? INPUT_ACTION_BTTL_COUNTER.get() : INPUT_ACTION_BTTL_ATTACK.get()), GPU.getOffsetX() + 124.5f, GPU.getOffsetY() + 56.0f, UI_WHITE_SHADOWED);
 
     if(Math.abs(frames) >= 2) {  // Button up position
       // Arrow

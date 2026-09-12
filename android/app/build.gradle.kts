@@ -10,13 +10,40 @@ val sharedUnpackerStructureDir = layout.buildDirectory.dir("generated/sharedUnpa
 val sharedUnpackerOrchestrationDir = layout.buildDirectory.dir("generated/sharedUnpackerOrchestration")
 val sharedShaderAssetsDir = layout.buildDirectory.dir("generated/sharedShaderAssets")
 val sharedMeshContractDir = layout.buildDirectory.dir("generated/sharedMeshContract")
+val sharedInputContractDir = layout.buildDirectory.dir("generated/sharedInputContract")
+
+val copySharedInputContract = tasks.register("copySharedInputContract") {
+    doLast {
+        copy {
+            from(
+                "../../src/main/java/legend/core/platform/input/InputAxis.java",
+                "../../src/main/java/legend/core/platform/input/InputAxisDirection.java",
+                "../../src/main/java/legend/core/platform/input/InputButton.java",
+                "../../src/main/java/legend/core/platform/input/InputCodepoints.java",
+                "../../src/main/java/legend/core/platform/input/InputGamepadType.java"
+            )
+            into(sharedInputContractDir.get().asFile.resolve("legend/core/platform/input"))
+        }
+    }
+}
 
 val copySharedMeshContract = tasks.register("copySharedMeshContract") {
     doLast {
         copy {
             from(
+                "../../src/main/java/legend/core/renderer/BufferUsage.java",
                 "../../src/main/java/legend/core/renderer/Mesh.java",
-                "../../src/main/java/legend/core/renderer/Translucency.java"
+                "../../src/main/java/legend/core/renderer/Shader.java",
+                "../../src/main/java/legend/core/renderer/ShaderOptions.java",
+                "../../src/main/java/legend/core/renderer/ShaderUniformBuffer.java",
+                "../../src/main/java/legend/core/renderer/ShaderUniformFloat.java",
+                "../../src/main/java/legend/core/renderer/ShaderUniformInt.java",
+                "../../src/main/java/legend/core/renderer/ShaderUniformMat4.java",
+                "../../src/main/java/legend/core/renderer/ShaderUniformVec2.java",
+                "../../src/main/java/legend/core/renderer/ShaderUniformVec3.java",
+                "../../src/main/java/legend/core/renderer/ShaderUniformVec4.java",
+                "../../src/main/java/legend/core/renderer/Translucency.java",
+                "../../src/main/java/legend/core/renderer/VertexOrder.java"
             )
             into(sharedMeshContractDir.get().asFile.resolve("legend/core/renderer"))
         }
@@ -151,7 +178,8 @@ android {
                 sharedFileDataSupportDir,
                 sharedUnpackerStructureDir,
                 sharedUnpackerOrchestrationDir,
-                sharedMeshContractDir
+                sharedMeshContractDir,
+                sharedInputContractDir
             )
             assets.srcDirs(sharedShaderAssetsDir)
         }
@@ -179,4 +207,5 @@ tasks.named("preBuild") {
     dependsOn(copySharedUnpackerOrchestration)
     dependsOn(copySharedShaderAssets)
     dependsOn(copySharedMeshContract)
+    dependsOn(copySharedInputContract)
 }

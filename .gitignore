@@ -56,3 +56,8 @@ gradle-app.setting
 
 # JDK files
 /jdk*
+/.jdk*/
+/.android-sdk-home/
+/android-sdk/
+/android/build/
+/android/app/build/

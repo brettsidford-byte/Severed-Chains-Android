@@ -5,7 +5,7 @@ import legend.core.gpu.Bpp;
 import legend.core.gte.MV;
 import legend.core.renderer.Obj;
 import legend.core.renderer.QuadBuilder;
-import legend.core.platform.input.InputCodepoints;
+import legend.core.platform.input.InputActionNames;
 import legend.lodmod.LodMod;
 
 import static legend.core.GameEngine.GPU;
@@ -76,7 +76,7 @@ public class CoolonQueenFuryOverlay {
   public void render(final int mode) {
     final int oldZ = textZ_800bdf00;
     textZ_800bdf00 = 13;
-    renderText(InputCodepoints.getActionName(LodMod.INPUT_ACTION_WMAP_QUEEN_FURY_COOLON.get()), GPU.getOffsetX() + 98.0f, GPU.getOffsetY() + 87.0f, UI_WHITE_SHADOWED_RIGHT);
+    renderText(InputActionNames.getActionName(LodMod.INPUT_ACTION_WMAP_QUEEN_FURY_COOLON.get()), GPU.getOffsetX() + 98.0f, GPU.getOffsetY() + 87.0f, UI_WHITE_SHADOWED_RIGHT);
     textZ_800bdf00 = oldZ;
 
     final int iconState;

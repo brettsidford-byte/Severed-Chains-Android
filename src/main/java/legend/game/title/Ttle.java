@@ -19,7 +19,7 @@ import legend.core.memory.Method;
 import legend.core.platform.Window;
 import legend.core.platform.WindowEvents;
 import legend.core.platform.input.InputAction;
-import legend.core.platform.input.InputCodepoints;
+import legend.core.platform.input.InputActionNames;
 import legend.core.renderer.Obj;
 import legend.core.renderer.QuadBuilder;
 import legend.core.renderer.QueuedModelStandard;
@@ -1154,7 +1154,7 @@ public class Ttle extends EngineState<Ttle> {
         .useTextureAlpha()
         .vertices(this.updateAvailableIconIndex * 4, 4);
 
-      renderText(I18n.translate("lod_core.ui.title.hotkey", InputCodepoints.getActionName(INPUT_ACTION_TITLE_UPDATE.get())), 111.0f, y + 3.0f, UI_WHITE_SMALL);
+      renderText(I18n.translate("lod_core.ui.title.hotkey", InputActionNames.getActionName(INPUT_ACTION_TITLE_UPDATE.get())), 111.0f, y + 3.0f, UI_WHITE_SMALL);
 
       y += 14.0f;
     }
@@ -1202,7 +1202,7 @@ public class Ttle extends EngineState<Ttle> {
         .useTextureAlpha()
         .vertices(this.memcardFoundIconIndex * 4, 4);
 
-      renderText(I18n.translate("lod_core.ui.title.hotkey", InputCodepoints.getActionName(INPUT_ACTION_TITLE_CONVERT_MEMCARD.get())), 115.0f, y + 3.0f, UI_WHITE_SMALL);
+      renderText(I18n.translate("lod_core.ui.title.hotkey", InputActionNames.getActionName(INPUT_ACTION_TITLE_CONVERT_MEMCARD.get())), 115.0f, y + 3.0f, UI_WHITE_SMALL);
     }
 
     renderText(Version.FULL_VERSION, 364, 4, VERSION_FONT, (model, shadow) -> model.alpha(this.menuUpdateTransparency / 128.0f).translucency(Translucency.HALF_B_PLUS_HALF_F));

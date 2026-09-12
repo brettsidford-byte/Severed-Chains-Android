@@ -13,6 +13,8 @@ import java.util.Locale;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import legend.core.platform.input.InputAxis;
+
 public final class SeveredChainsSurfaceView extends GLSurfaceView {
     private static final String TAG = "SeveredChains";
 
@@ -61,10 +63,10 @@ public final class SeveredChainsSurfaceView extends GLSurfaceView {
         if (input.onGenericMotion(event)) {
             final String values = String.format(Locale.ROOT,
                 "LX %.2f LY %.2f RX %.2f RY %.2f",
-                input.axis(AndroidInputState.Control.LEFT_STICK_X),
-                input.axis(AndroidInputState.Control.LEFT_STICK_Y),
-                input.axis(AndroidInputState.Control.RIGHT_STICK_X),
-                input.axis(AndroidInputState.Control.RIGHT_STICK_Y));
+                input.axis(InputAxis.LEFT_X),
+                input.axis(InputAxis.LEFT_Y),
+                input.axis(InputAxis.RIGHT_X),
+                input.axis(InputAxis.RIGHT_Y));
             Log.i(TAG, "Controller motion: " + values);
             renderer.setLastInput(values);
             return true;

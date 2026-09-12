@@ -8,7 +8,7 @@ import legend.core.platform.input.InputAxis;
 import legend.core.platform.input.InputAxisDirection;
 import legend.core.platform.input.InputButton;
 import legend.core.platform.input.InputClass;
-import legend.core.platform.input.InputCodepoints;
+import legend.core.platform.input.InputActionNames;
 import legend.core.platform.input.InputKey;
 import legend.core.platform.input.InputMod;
 import legend.game.SItem;
@@ -41,7 +41,7 @@ public abstract class MenuScreen extends ControlHost {
   private int hotkeyX = 8;
 
   public void addHotkey(final TextComponent label, final RegistryDelegate<InputAction> action, final Runnable handler) {
-    final Button button = this.addControl(new Button(new I18nText("lod_core.ui.hotkey", label, InputCodepoints.getActionName(action.get()))));
+    final Button button = this.addControl(new Button(new I18nText("lod_core.ui.hotkey", label, InputActionNames.getActionName(action.get()))));
     button.setScale(0.66f);
     button.setSize((int)(button.getFont().textWidth(button.getText().get()) * button.getFontOptions().getSize() + 10), 10);
     button.setPos(this.hotkeyX, 227);
@@ -60,7 +60,7 @@ public abstract class MenuScreen extends ControlHost {
     checkbox.setChecked(checked);
     this.hotkeyX += checkbox.getWidth() + 3;
 
-    final Label checkboxLabel = this.addControl(new Label(new I18nText("lod_core.ui.hotkey", label, InputCodepoints.getActionName(action.get()))));
+    final Label checkboxLabel = this.addControl(new Label(new I18nText("lod_core.ui.hotkey", label, InputActionNames.getActionName(action.get()))));
     checkboxLabel.setScale(0.66f);
     checkboxLabel.setSize((int)(checkboxLabel.getFont().textWidth(checkboxLabel.getText().get()) * checkboxLabel.getFontOptions().getSize() + 10), 10);
     checkboxLabel.setPos(this.hotkeyX, 228);
@@ -82,12 +82,12 @@ public abstract class MenuScreen extends ControlHost {
         this.hotkeyX += control.getWidth();
 
         if(control instanceof final Button button) {
-          button.setText(new I18nText("lod_core.ui.hotkey", hotkey.label, InputCodepoints.getActionName(hotkey.action.get())));
+          button.setText(new I18nText("lod_core.ui.hotkey", hotkey.label, InputActionNames.getActionName(hotkey.action.get())));
           button.setSize((int)(button.getFont().textWidth(button.getText().get()) * button.getFontOptions().getSize() + 10), 10);
         } else if(control instanceof Checkbox) {
           this.hotkeyX += 3;
         } else if(control instanceof final Label label) {
-          label.setText(new I18nText("lod_core.ui.hotkey", hotkey.label, InputCodepoints.getActionName(hotkey.action.get())));
+          label.setText(new I18nText("lod_core.ui.hotkey", hotkey.label, InputActionNames.getActionName(hotkey.action.get())));
           this.hotkeyX -= 5;
         }
       }

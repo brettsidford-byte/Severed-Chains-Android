@@ -13,7 +13,7 @@ import legend.core.gte.MV;
 import legend.core.gte.ModelPart10;
 import legend.core.gte.Transforms;
 import legend.core.memory.Method;
-import legend.core.platform.input.InputCodepoints;
+import legend.core.platform.input.InputActionNames;
 import legend.core.renderer.Obj;
 import legend.core.renderer.PolyBuilder;
 import legend.core.renderer.QuadBuilder;
@@ -1278,7 +1278,7 @@ public final class SEffe {
 
     //LAB_80107b10
     // Button
-    renderText(InputCodepoints.getActionName(INPUT_ACTION_BTTL_ATTACK.get()), GPU.getOffsetX() + 87.85f, GPU.getOffsetY() + 8, UI_WHITE_SHADOWED);
+    renderText(InputActionNames.getActionName(INPUT_ACTION_BTTL_ATTACK.get()), GPU.getOffsetX() + 87.85f, GPU.getOffsetY() + 8, UI_WHITE_SHADOWED);
 
     // Button press red glow
     if(daddy.buttonPressGlowBrightnessFactor_11 != 0) {

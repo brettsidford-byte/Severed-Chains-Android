@@ -293,6 +293,34 @@
 
 2026-09-11: Corrected the inline GLES diagnostic backend shader strings, which had the same literal-escape newline defect as the asset adapter. The diagnostic primitive now supplies valid line-separated ES 3 shader source; no intermediate APK installation performed.
 
+## 2026-09-12 — upstream physical-controller contract
+
+- Replaced the Android-only controller enum with the upstream `InputButton` and `InputAxis` contracts.
+- Android key and motion events now retain face buttons, D-pad, shoulders, triggers, stick clicks and analogue axes in the same vocabulary consumed by the existing action-binding layer.
+- The desktop controller implementation and user-configurable action abstraction remain unchanged; wiring these states into the Android `PlatformManager` is the next lifecycle step.
+
+## 2026-09-12 — upstream uniform-buffer contract
+
+- Made the Android GLES uniform buffer implement the real upstream `ShaderUniformBuffer` interface.
+- Added bounded full and offset `FloatBuffer` updates plus idempotent deletion, matching the calls made by `RenderEngine` while retaining Android GL-thread ownership.
+
+## 2026-09-12 — Android TMD geometry-shader path
+
+- Added GLES 3.2 three-stage program linking and GLSL ES 3.20 adaptation for the upstream TMD vertex/geometry/fragment shader pipeline.
+- Kept the existing GLES 3.0 two-stage shaders unchanged; device capability still must be confirmed before the engine selects the TMD path.
+- Corrected version-prologue adaptation to match the first shader line in multiline source, ensuring desktop GLSL declarations are actually replaced before GLES compilation.
+
+## 2026-09-12 — complete upstream mesh contract
+
+- Added indexed and non-indexed Android mesh construction for every upstream `VertexOrder` and `BufferUsage`, including GLES 3.2 triangle adjacency for TMD rendering.
+- Corrected upstream attribute offsets/strides to convert floats to GLES byte units, retained mutable vertex arrays for dynamic updates, and matched ranged draw and mesh metadata semantics.
+- Corrected the existing 32-bit standard-mesh path to draw its indices as `GL_UNSIGNED_INT`.
+
+## 2026-09-12 — upstream shader contract
+
+- Made the Android GLES shader resource implement the real generic upstream `Shader` contract and all scalar, vector, matrix and uniform-block handles.
+- Added upstream-compatible options factories and safe program reload while continuing to load/adapt the original shader assets from the APK.
+
 ## 2026-09-11 — Android GLES framebuffer binding safety
 
 - The framebuffer adapter now restores the previously bound framebuffer after creation instead of forcing the default target.

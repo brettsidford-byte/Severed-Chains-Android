@@ -22,10 +22,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '17'
+          # The bundled Android mod-loader is compiled for Java 21.
+          java-version: '21'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3

@@ -29,11 +29,8 @@ import legend.game.combat.environment.CombatPortraitBorderMetrics0c;
 import legend.game.combat.environment.SpBarBorderMetrics04;
 import legend.game.combat.types.BattleHudStatLabelMetrics0c;
 import legend.game.inventory.WhichMenu;
-import legend.game.inventory.screens.BattleOptionsCategoryScreen;
 import legend.game.inventory.screens.FontOptions;
 import legend.game.modding.events.battle.StatDisplayEvent;
-import legend.game.saves.ConfigStorage;
-import legend.game.saves.ConfigStorageLocation;
 import legend.game.scripting.ScriptState;
 import legend.game.textures.TextureAtlasIcon;
 import legend.game.ui.UiBox;
@@ -52,7 +49,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +66,6 @@ import static legend.game.Graphics.centreScreenY_1f8003de;
 import static legend.game.Graphics.vsyncMode_8007a3b8;
 import static legend.game.Menus.whichMenu_800bdc38;
 import static legend.game.SItem.UI_WHITE_CENTERED;
-import static legend.game.SItem.menuStack;
 import static legend.game.Scus94491BpeSegment_8006.battleState_8006e398;
 import static legend.game.Scus94491BpeSegment_800b.encounter;
 import static legend.game.Scus94491BpeSegment_800b.gameState_800babc8;
@@ -1476,15 +1471,6 @@ public class BattleHud {
       }
 
       case 1 -> {  // Checking for input
-        if(whichMenu_800bdc38 == WhichMenu.NONE_0 && !this.battleMenu_800c6c34.displayTargetArrowAndName_4c && !this.battleMenu_800c6c34.targetArrowHiding && PLATFORM.isActionPressed(LodMod.INPUT_ACTION_BTTL_OPTIONS.get())) {
-          whichMenu_800bdc38 = WhichMenu.RENDER_NEW_MENU;
-          menuStack.pushScreen(new BattleOptionsCategoryScreen(CONFIG, EnumSet.allOf(ConfigStorageLocation.class), () -> {
-            ConfigStorage.saveConfig(CONFIG, ConfigStorageLocation.GLOBAL, Path.of("config.dcnf"));
-            ConfigStorage.saveConfig(CONFIG, ConfigStorageLocation.CAMPAIGN, gameState_800babc8.campaign.path.resolve("campaign_config.dcnf"));
-            this.closeMenu = true;
-          }));
-        }
-
         this.battleMenu_800c6c34.targetArrowHiding = false;
 
         if(this.closeMenu) {

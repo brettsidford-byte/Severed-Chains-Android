@@ -4,12 +4,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONException;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,31 +24,18 @@ public class Updater {
 
   private static final String UPDATE_URL = "https://api.github.com/repos/Legend-of-Dragoon-Modding/Severed-Chains/releases";
 
-  private HttpClient client;
-
   private CompletableFuture<?> activeCheck;
+  private volatile HttpURLConnection activeConnection;
 
   public void delete() {
-    if(this.client != null) {
-      this.client.close();
-    }
+    final CompletableFuture<?> check = this.activeCheck;
+    if(check != null) check.cancel(true);
+    final HttpURLConnection connection = this.activeConnection;
+    if(connection != null) connection.disconnect();
   }
 
   public void check(final Consumer<Release> onComplete) {
     synchronized(this) {
-      if(this.client == null) {
-        try {
-          this.client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).followRedirects(HttpClient.Redirect.NORMAL).build();
-        } catch(final Throwable r) {
-          LOGGER.error("Failed to initialize updater");
-        }
-
-        if(this.client == null) {
-          onComplete.accept(null);
-          return;
-        }
-      }
-
       if(this.activeCheck != null) {
         return;
       }
@@ -62,12 +49,12 @@ public class Updater {
       }
 
       LOGGER.info("Checking for updates...");
-      this.activeCheck = this.get(UPDATE_URL, response -> this.onCheckComplete(response, onComplete));
+      this.activeCheck = CompletableFuture.runAsync(() -> this.fetchReleases(onComplete));
     }
   }
 
-  private void onCheckComplete(final HttpResponse<String> response, final Consumer<Release> onComplete) {
-    final Release release = this.parseReleases(new JSONArray(response.body()))
+  private void onCheckComplete(final String responseBody, final Consumer<Release> onComplete) throws JSONException {
+    final Release release = this.parseReleases(new JSONArray(responseBody))
       .stream()
       .filter(r -> r.tag.startsWith(Version.CHANNEL) && r.timestamp.isAfter(Version.TIMESTAMP))
       .sorted()
@@ -87,7 +74,7 @@ public class Updater {
     }
   }
 
-  private List<Release> parseReleases(final JSONArray releasesJson) {
+  private List<Release> parseReleases(final JSONArray releasesJson) throws JSONException {
     final List<Release> releases = new ArrayList<>();
 
     for(int releaseIndex = 0; releaseIndex < releasesJson.length(); releaseIndex++) {
@@ -111,34 +98,32 @@ public class Updater {
     return releases;
   }
 
-  private CompletableFuture<Void> get(final String url, final Consumer<HttpResponse<String>> listener) {
-    final HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
-    final CompletableFuture<HttpResponse<String>> responseFuture = this.client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-
-    return responseFuture
-      .thenApply(response -> {
-        if(response.statusCode() / 100 != 2) {
-          LOGGER.warn("Request to %s failed: %d", response.uri(), response.statusCode());
-
-          synchronized(this) {
-            this.activeCheck = null;
-          }
-        }
-
-        listener.accept(response);
-        return response;
-      })
-      .thenAccept(listener)
-      .exceptionally(t -> {
-        LOGGER.warn("Failed to check for updates", t);
-
-        synchronized(this) {
-          this.activeCheck = null;
-        }
-
-        return null;
-      })
-    ;
+  private void fetchReleases(final Consumer<Release> onComplete) {
+    HttpURLConnection connection = null;
+    try {
+      connection = (HttpURLConnection)URI.create(UPDATE_URL).toURL().openConnection();
+      this.activeConnection = connection;
+      connection.setConnectTimeout(10_000);
+      connection.setReadTimeout(10_000);
+      connection.setInstanceFollowRedirects(true);
+      connection.setRequestProperty("Accept", "application/vnd.github+json");
+      final int status = connection.getResponseCode();
+      if(status / 100 != 2) {
+        LOGGER.warn("Request to %s failed: %d", UPDATE_URL, status);
+        onComplete.accept(null);
+        return;
+      }
+      this.onCheckComplete(new String(connection.getInputStream().readAllBytes(), StandardCharsets.UTF_8), onComplete);
+    } catch(final Exception e) {
+      LOGGER.warn("Failed to check for updates", e);
+      onComplete.accept(null);
+    } finally {
+      if(connection != null) connection.disconnect();
+      this.activeConnection = null;
+      synchronized(this) {
+        this.activeCheck = null;
+      }
+    }
   }
 
   public static class Release implements Comparable<Release> {

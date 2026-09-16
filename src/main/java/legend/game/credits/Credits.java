@@ -1,6 +1,6 @@
 package legend.game.credits;
 
-import de.jcm.discordgamesdk.activity.Activity;
+import discord.RichPresenceActivity;
 import legend.core.MathHelper;
 import legend.core.gpu.Bpp;
 import legend.core.gpu.Rect4i;
@@ -726,7 +726,7 @@ public class Credits extends EngineState<Credits> {
   }
 
   @Override
-  public void updateDiscordRichPresence(final GameState52c gameState, final Activity activity) {
+  public void updateDiscordRichPresence(final GameState52c gameState, final RichPresenceActivity activity) {
     activity.setDetails("Watching the Credits");
     activity.setState(null);
   }

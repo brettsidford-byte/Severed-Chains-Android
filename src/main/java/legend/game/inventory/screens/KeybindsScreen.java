@@ -98,11 +98,26 @@ public class KeybindsScreen extends VerticalLayoutScreen {
       } else if(activation instanceof final ButtonInputActivation button) {
         text.add(String.valueOf(button.button.codepoint));
       } else if(activation instanceof final AxisInputActivation axis) {
-        text.add(String.valueOf(axis.axis.codepoint));
+        text.add(this.axisToString(axis));
       }
     }
 
     return String.join(", ", text);
+  }
+
+  private String axisToString(final AxisInputActivation activation) {
+    return switch(activation.axis) {
+      case LEFT_X -> activation.direction == legend.core.platform.input.InputAxisDirection.NEGATIVE
+        ? "Left stick left" : "Left stick right";
+      case LEFT_Y -> activation.direction == legend.core.platform.input.InputAxisDirection.NEGATIVE
+        ? "Left stick up" : "Left stick down";
+      case RIGHT_X -> activation.direction == legend.core.platform.input.InputAxisDirection.NEGATIVE
+        ? "Right stick left" : "Right stick right";
+      case RIGHT_Y -> activation.direction == legend.core.platform.input.InputAxisDirection.NEGATIVE
+        ? "Right stick up" : "Right stick down";
+      case LEFT_TRIGGER -> "Left trigger";
+      case RIGHT_TRIGGER -> "Right trigger";
+    };
   }
 
   private String modsToString(final Set<InputMod> mods) {

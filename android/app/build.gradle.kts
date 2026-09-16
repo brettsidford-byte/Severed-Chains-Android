@@ -2,139 +2,42 @@ plugins {
     id("com.android.application")
 }
 
-val sharedGamePathsDir = layout.buildDirectory.dir("generated/sharedGamePaths")
-val sharedIsoReaderDir = layout.buildDirectory.dir("generated/sharedIsoReader")
-val sharedFileDataDir = layout.buildDirectory.dir("generated/sharedFileData")
-val sharedFileDataSupportDir = layout.buildDirectory.dir("generated/sharedFileDataSupport")
-val sharedUnpackerStructureDir = layout.buildDirectory.dir("generated/sharedUnpackerStructure")
-val sharedUnpackerOrchestrationDir = layout.buildDirectory.dir("generated/sharedUnpackerOrchestration")
 val sharedShaderAssetsDir = layout.buildDirectory.dir("generated/sharedShaderAssets")
-val sharedMeshContractDir = layout.buildDirectory.dir("generated/sharedMeshContract")
-val sharedInputContractDir = layout.buildDirectory.dir("generated/sharedInputContract")
-
-val copySharedInputContract = tasks.register("copySharedInputContract") {
-    doLast {
-        copy {
-            from(
-                "../../src/main/java/legend/core/platform/input/InputAxis.java",
-                "../../src/main/java/legend/core/platform/input/InputAxisDirection.java",
-                "../../src/main/java/legend/core/platform/input/InputButton.java",
-                "../../src/main/java/legend/core/platform/input/InputCodepoints.java",
-                "../../src/main/java/legend/core/platform/input/InputGamepadType.java"
-            )
-            into(sharedInputContractDir.get().asFile.resolve("legend/core/platform/input"))
-        }
-    }
+val expectedGlesShaders = fileTree("src/main/gles-shaders") {
+    include("*.vsh", "*.gsh", "*.fsh")
 }
 
-val copySharedMeshContract = tasks.register("copySharedMeshContract") {
+val verifyGlesShaders = tasks.register("verifyGlesShaders") {
+    inputs.files(expectedGlesShaders)
     doLast {
-        copy {
-            from(
-                "../../src/main/java/legend/core/renderer/BufferUsage.java",
-                "../../src/main/java/legend/core/renderer/Mesh.java",
-                "../../src/main/java/legend/core/renderer/Shader.java",
-                "../../src/main/java/legend/core/renderer/ShaderOptions.java",
-                "../../src/main/java/legend/core/renderer/ShaderUniformBuffer.java",
-                "../../src/main/java/legend/core/renderer/ShaderUniformFloat.java",
-                "../../src/main/java/legend/core/renderer/ShaderUniformInt.java",
-                "../../src/main/java/legend/core/renderer/ShaderUniformMat4.java",
-                "../../src/main/java/legend/core/renderer/ShaderUniformVec2.java",
-                "../../src/main/java/legend/core/renderer/ShaderUniformVec3.java",
-                "../../src/main/java/legend/core/renderer/ShaderUniformVec4.java",
-                "../../src/main/java/legend/core/renderer/Translucency.java",
-                "../../src/main/java/legend/core/renderer/VertexOrder.java"
-            )
-            into(sharedMeshContractDir.get().asFile.resolve("legend/core/renderer"))
-        }
-    }
-}
-
-val copySharedGamePaths = tasks.register("copySharedGamePaths") {
-    doLast {
-        copy {
-            from("../../src/main/java/legend/core/GamePaths.java")
-            into(sharedGamePathsDir.get().asFile.resolve("legend/core"))
-        }
-    }
-}
-
-val copySharedIsoReader = tasks.register("copySharedIsoReader") {
-    doLast {
-        copy {
-            from("../../src/main/java/legend/game/unpacker/IsoReader.java")
-            into(sharedIsoReaderDir.get().asFile.resolve("legend/game/unpacker"))
-        }
-    }
-}
-
-val copySharedFileData = tasks.register("copySharedFileData") {
-    doLast {
-        copy {
-            from(
-                "../../src/main/java/legend/game/unpacker/FileData.java",
-                "../../src/main/java/legend/game/unpacker/FileBackedFileData.java",
-                "../../src/main/java/legend/game/unpacker/ExpandableFileData.java",
-                "../../src/main/java/legend/game/unpacker/MrgArchive.java",
-                "../../src/main/java/legend/game/unpacker/DeffArchive.java"
-            )
-            into(sharedFileDataDir.get().asFile.resolve("legend/game/unpacker"))
-        }
-    }
-}
-
-val copySharedFileDataSupport = tasks.register("copySharedFileDataSupport") {
-    doLast {
-        copy {
-            from("../../src/main/java/legend/core/gpu/Rect4i.java")
-            into(sharedFileDataSupportDir.get().asFile.resolve("legend/core/gpu"))
-        }
-        copy {
-            from("../../src/main/java/legend/core/gte/MV.java")
-            into(sharedFileDataSupportDir.get().asFile.resolve("legend/core/gte"))
-        }
-        copy {
-            from("../../src/main/java/legend/core/memory/types/IntRef.java")
-            into(sharedFileDataSupportDir.get().asFile.resolve("legend/core/memory/types"))
-        }
-    }
-}
-
-val copySharedUnpackerStructure = tasks.register("copySharedUnpackerStructure") {
-    doLast {
-        copy {
-            from(
-                "../../src/main/java/legend/game/unpacker/DirectoryEntry.java",
-                "../../src/main/java/legend/game/unpacker/FileMap.java",
-                "../../src/main/java/legend/game/unpacker/PathNode.java",
-                "../../src/main/java/legend/game/unpacker/UnpackerException.java",
-                "../../src/main/java/legend/game/unpacker/UnpackerStoppedRuntimeException.java"
-            )
-            into(sharedUnpackerStructureDir.get().asFile.resolve("legend/game/unpacker"))
-        }
-    }
-}
-
-val copySharedUnpackerOrchestration = tasks.register("copySharedUnpackerOrchestration") {
-    doLast {
-        copy {
-            from(
-                "../../src/main/java/legend/game/unpacker/Transformations.java",
-                "../../src/main/java/legend/game/unpacker/LeafTransformation.java",
-                "../../src/main/java/legend/game/unpacker/BranchTransformation.java",
-                "../../src/main/java/legend/game/unpacker/Replacement.java",
-                "../../src/main/java/legend/game/unpacker/Unpacker.java"
-            )
-            into(sharedUnpackerOrchestrationDir.get().asFile.resolve("legend/game/unpacker"))
+        val files = expectedGlesShaders.files.sortedBy { it.name }
+        check(files.size == 13) { "Expected 13 precompiled GLES shaders, found ${files.size}" }
+        files.forEach { shader ->
+            check(shader.readText().trimStart().startsWith("#version 320 es")) {
+                "${shader.name} is not precompiled GLSL ES 3.20"
+            }
         }
     }
 }
 
 val copySharedShaderAssets = tasks.register("copySharedShaderAssets") {
+    dependsOn(verifyGlesShaders)
     doLast {
         copy {
-            from("../../gfx/shaders")
+            from("../../gfx")
+            into(sharedShaderAssetsDir.get().asFile.resolve("runtime/gfx"))
+        }
+        copy {
+            from("src/main/gles-shaders")
             into(sharedShaderAssetsDir.get().asFile.resolve("gfx/shaders"))
+        }
+        copy {
+            from("../../lang")
+            into(sharedShaderAssetsDir.get().asFile.resolve("runtime/lang"))
+        }
+        copy {
+            from("../../patches")
+            into(sharedShaderAssetsDir.get().asFile.resolve("runtime/patches"))
         }
     }
 }
@@ -147,8 +50,8 @@ android {
         applicationId = "legend.severedchains.android"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "0.8.0-extraction-retry"
+        versionCode = 10
+        versionName = "0.9.0"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -163,25 +66,30 @@ android {
     }
 
     packaging {
+        jniLibs {
+            // The RG405V package manager cannot mmap the preset FFmpeg payload
+            // directly from this debug APK; extract it into the app's native dir.
+            useLegacyPackaging = true
+            // JavaCV uses the JNI libraries, not the preset command-line tools;
+            // non-lib filenames under lib/<abi> are rejected by some installers.
+            excludes += setOf("**/ffmpeg", "**/ffprobe")
+        }
         resources {
             excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/LICENSE*"
+            excludes += "/META-INF/NOTICE*"
+            excludes += "/legend/core/updater.fxml"
+            excludes += "/legend/game/debugger/**"
+            excludes += "/lib/**/ffmpeg"
+            excludes += "/lib/**/ffprobe"
         }
     }
 
     sourceSets {
         getByName("main") {
-            java.srcDirs(
-                "src/main/java",
-                sharedGamePathsDir,
-                sharedIsoReaderDir,
-                sharedFileDataDir,
-                sharedFileDataSupportDir,
-                sharedUnpackerStructureDir,
-                sharedUnpackerOrchestrationDir,
-                sharedMeshContractDir,
-                sharedInputContractDir
-            )
             assets.srcDirs(sharedShaderAssetsDir)
+            java.srcDirs("../../src/main/java", "../engine/src/main/java")
+            resources.srcDirs("../../src/main/resources")
         }
     }
 
@@ -191,21 +99,52 @@ android {
     }
 }
 
+tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {
+    exclude("legend/core/platform/Sdl*.java")
+    exclude("legend/core/platform/input/Sdl*.java")
+    exclude("legend/core/renderer/opengl/**")
+    exclude("legend/core/renderer/opengles/**")
+    exclude("discord/desktop/**")
+    exclude("legend/core/gpu/desktop/**")
+    exclude("legend/core/audio/desktop/**")
+    exclude("legend/core/audio/opus/desktop/**")
+    exclude("legend/game/textures/desktop/**")
+    exclude("legend/game/unpacker/midi/SoundbankDecoder.java")
+    exclude("legend/game/Main.java")
+    exclude("legend/game/MainWindows.java")
+    exclude("legend/core/desktop/**")
+    exclude("legend/game/debugger/**")
+    exclude("legend/core/UpdaterApplication.java")
+    exclude("legend/core/UpdaterController.java")
+    exclude("legend/core/UpdaterMain.java")
+}
+
 dependencies {
-    implementation("org.joml:joml:1.10.8")
-    implementation("com.google.code.findbugs:jsr305:3.0.2")
+    implementation(files("../engine/libs/mod-loader-4.3.3-android.jar"))
+    implementation("org.apache.commons:commons-collections4:4.4")
+    implementation("com.vdurmont:semver4j:3.1.0")
+    implementation("org.reflections:reflections:0.10.2")
+    implementation("org.slf4j:slf4j-nop:2.0.7")
+    implementation(files("../engine/libs/script-recompiler-0.7.11-java17.jar"))
+    implementation("org.antlr:antlr4:4.13.2")
+    implementation("org.fusesource.jansi:jansi:2.4.3")
+    implementation("commons-cli:commons-cli:1.6.0")
+    implementation(files("../engine/libs/mogul-dabas-0.0.1-java17.jar"))
     implementation("org.apache.logging.log4j:log4j-api:2.26.1")
     implementation("org.apache.logging.log4j:log4j-core:2.26.1")
+    implementation("org.joml:joml:1.10.8")
+    implementation("org.json:json:20250107")
+    implementation("com.google.code.gson:gson:2.13.2")
+    implementation("com.opencsv:opencsv:5.9")
+    implementation("io.github.java-diff-utils:java-diff-utils:4.15")
+    implementation("commons-io:commons-io:2.18.0")
+    implementation("com.github.slugify:slugify:3.0.7")
+    implementation("it.unimi.dsi:fastutil:8.5.15")
+    implementation("com.google.code.findbugs:jsr305:3.0.2")
+    implementation("org.bytedeco:javacv:1.5.13")
+    implementation("org.bytedeco:ffmpeg:8.0-1.5.13:android-arm64")
 }
 
 tasks.named("preBuild") {
-    dependsOn(copySharedGamePaths)
-    dependsOn(copySharedIsoReader)
-    dependsOn(copySharedFileData)
-    dependsOn(copySharedFileDataSupport)
-    dependsOn(copySharedUnpackerStructure)
-    dependsOn(copySharedUnpackerOrchestration)
     dependsOn(copySharedShaderAssets)
-    dependsOn(copySharedMeshContract)
-    dependsOn(copySharedInputContract)
 }

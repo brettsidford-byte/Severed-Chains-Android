@@ -1,8 +1,7 @@
 package legend.core.renderer;
 
-import javafx.application.Application;
-import javafx.application.Platform;
 import legend.core.Config;
+import legend.core.DirectBuffers;
 import legend.core.LitModel;
 import legend.core.MathHelper;
 import legend.core.QueuePool;
@@ -17,7 +16,7 @@ import legend.core.platform.input.InputKey;
 import legend.core.platform.input.InputMod;
 import legend.game.EngineState;
 import legend.game.combat.Battle;
-import legend.game.debugger.Debugger;
+import legend.game.modding.coremod.CoreMod;
 import legend.game.scripting.FlowControl;
 import legend.game.scripting.RunningScript;
 import legend.game.scripting.ScriptDescription;
@@ -28,7 +27,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
-import org.lwjgl.BufferUtils;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
@@ -115,12 +113,12 @@ public class RenderEngine {
   private ShaderUniformBuffer projectionUniform;
   ShaderUniformBuffer scissorUniform;
   private ShaderUniformBuffer clutAnimationUniform;
-  private final FloatBuffer transformsBuffer = BufferUtils.createFloatBuffer(4 * 4 * 2);
-  private final FloatBuffer transforms2Buffer = BufferUtils.createFloatBuffer((4 * 4 + 4) * 128);
-  private final FloatBuffer lightBuffer = BufferUtils.createFloatBuffer((4 * 4 + 3 * 4 + 4) * 128); // 3*4 since glsl std140 means mat3's are basically 3 vec4s
-  private final FloatBuffer projectionBuffer = BufferUtils.createFloatBuffer(4);
-  final FloatBuffer scissorBuffer = BufferUtils.createFloatBuffer(4);
-  private final FloatBuffer clutAnimationBuffer = BufferUtils.createFloatBuffer(2 * 2 * 1024); // 2 sets of 2 vectors
+  private final FloatBuffer transformsBuffer = DirectBuffers.floats(4 * 4 * 2);
+  private final FloatBuffer transforms2Buffer = DirectBuffers.floats((4 * 4 + 4) * 128);
+  private final FloatBuffer lightBuffer = DirectBuffers.floats((4 * 4 + 3 * 4 + 4) * 128); // 3*4 since glsl std140 means mat3's are basically 3 vec4s
+  private final FloatBuffer projectionBuffer = DirectBuffers.floats(4);
+  final FloatBuffer scissorBuffer = DirectBuffers.floats(4);
+  private final FloatBuffer clutAnimationBuffer = DirectBuffers.floats(2 * 2 * 1024); // 2 sets of 2 vectors
   private int clutAnimationBufferIndex;
   private boolean frameSkip = true;
   private TurnOrderMod turnOrderMod;
@@ -470,6 +468,7 @@ public class RenderEngine {
   public void init() {
     this.camera2d = new BasicCamera(0.0f, 0.0f);
     this.camera3d = new QuaternionCamera(0.0f, 0.0f, 0.0f);
+    PLATFORM.setDefaultFullscreen(CONFIG.getConfig(CoreMod.FULLSCREEN_CONFIG.get()));
     this.window = PLATFORM.addWindow("Severed Chains " + Version.FULL_VERSION, Config.windowWidth(), Config.windowHeight());
     this.window.events().onClose(PLATFORM::stop);
     this.window.setFpsLimit(60);
@@ -863,7 +862,16 @@ public class RenderEngine {
       batch.needsSorting = false;
     }
 
-    this.api.initBatch(batch);
+    final boolean widescreen = batch.getRenderMode() == EngineState.RenderMode.PERSPECTIVE
+      && CoreMod.ALLOW_WIDESCREEN_CONFIG.isValid()
+      && CONFIG.getConfig(CoreMod.ALLOW_WIDESCREEN_CONFIG.get())
+      || batch.getRenderMode() == EngineState.RenderMode.LEGACY
+      && CoreMod.LEGACY_WIDESCREEN_MODE_CONFIG.isValid()
+      && CONFIG.getConfig(CoreMod.LEGACY_WIDESCREEN_MODE_CONFIG.get()) == SubmapWidescreenMode.EXPANDED;
+    final boolean forced4By3 = batch.getRenderMode() == EngineState.RenderMode.LEGACY
+      && CONFIG.getConfig(CoreMod.LEGACY_WIDESCREEN_MODE_CONFIG.get()) == SubmapWidescreenMode.FORCED_4_3;
+    this.api.initBatch(widescreen, forced4By3, batch.nativeWidth, batch.nativeHeight,
+      batch.expectedWidth, batch.widescreenOrthoOffsetX);
     this.api.clear(false, true, false);
 
     this.api.wireframe(this.wireframeMode);
@@ -908,7 +916,8 @@ public class RenderEngine {
       entry.useShader(modelIndex, 1);
       this.api.enableDepthTest(entry.opaqueDepthComparator);
 
-      this.api.scissor(entry, this.scissorBuffer, this.scissorUniform);
+      this.api.scissor(entry.worldScissor(), entry.modelScissor(),
+        this.scissorBuffer, this.scissorUniform);
 
       for(int layer = 0; layer < entry.getLayers(); layer++) {
         if(entry.shouldRender(null, layer)) {
@@ -961,7 +970,8 @@ public class RenderEngine {
       if(entry.hasTranslucency()) {
         entry.useShader(modelIndex, 2);
         this.api.enableDepthTest(entry.translucentDepthComparator);
-        this.api.scissor(entry, this.scissorBuffer, this.scissorUniform);
+        this.api.scissor(entry.worldScissor(), entry.modelScissor(),
+          this.scissorBuffer, this.scissorUniform);
         entry.useTexture();
 
         for(int layer = 0; layer < entry.getLayers(); layer++) {
@@ -1399,16 +1409,7 @@ public class RenderEngine {
     }
 
     if(action == INPUT_ACTION_DEBUG_OPEN_DEBUGGER.get()) {
-      if(!Debugger.isRunning()) {
-        try {
-          Platform.setImplicitExit(false);
-          new Thread(() -> Application.launch(Debugger.class)).start();
-        } catch(final Exception e) {
-          LOGGER.info("Failed to start debugger", e);
-        }
-      } else {
-        Platform.runLater(Debugger::show);
-      }
+      PLATFORM.openDebugger();
     } else if(action == INPUT_ACTION_GENERAL_TOGGLE_FULLSCREEN.get()) {
       Config.switchFullScreen();
     } else if(action == INPUT_ACTION_GENERAL_SPEED_UP.get()) {

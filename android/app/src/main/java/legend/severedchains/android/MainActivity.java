@@ -9,22 +9,36 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.IOException;
 import java.util.List;
 
 import legend.core.GamePaths;
+import legend.core.audio.AudioBackends;
+import legend.core.audio.AndroidAudioBackend;
+import legend.core.audio.opus.AndroidFfmpegOpusDecoder;
+import legend.core.audio.opus.AndroidMediaCodecOpusEncoder;
+import legend.core.audio.opus.OpusDecoders;
+import legend.core.audio.opus.OpusEncoders;
+import legend.core.platform.AndroidPlatformManager;
+import legend.core.platform.PlatformManagerFactory;
+import legend.core.renderer.TextureBuilder;
+import legend.game.textures.AndroidPngEncoder;
+import legend.game.textures.PngWriter;
 
 public final class MainActivity extends Activity {
     private static final String TAG = "SeveredChains";
-    private static final String BUILD_LABEL = "Android build 1.0.0 automatic startup";
+    private static final String BUILD_LABEL = "Severed Chains Android 0.9.0";
     private static final int SELECT_GAME_DATA = 1001;
 
     private GameDataStore gameDataStore;
     private TextView status;
     private Button select;
     private SeveredChainsSurfaceView surface;
+    private FrameLayout controls;
+    private ImageView splash;
 
     @Override
     protected void onCreate(final Bundle state) {
@@ -34,17 +48,33 @@ public final class MainActivity extends Activity {
         storage.ensureLayout();
         System.setProperty("severed.chains.root", storage.root().getAbsolutePath());
         GamePaths.configure(storage.root().toPath());
+        try {
+            BundledRuntimeAssets.install(this, GamePaths.root());
+        } catch (final IOException exception) {
+            throw new IllegalStateException("Unable to install bundled Severed Chains runtime assets", exception);
+        }
+        TextureBuilder.setPngDecoder(new AndroidTexturePngDecoder());
+        PngWriter.setEncoder(new AndroidPngEncoder());
+        AudioBackends.install(AndroidAudioBackend::new);
+        OpusDecoders.install(AndroidFfmpegOpusDecoder::new);
+        OpusEncoders.install(AndroidMediaCodecOpusEncoder::new);
         gameDataStore = new GameDataStore(this);
-        Log.i(TAG, "Android probe starting; storage root=" + storage.root()
+        Log.i(TAG, "Android engine host starting; storage root=" + storage.root()
             + ", shared GamePaths root=" + GamePaths.root()
             + ", isos=" + storage.isos()
             + ", extractedFiles=" + storage.extractedFiles());
 
         final FrameLayout root = new FrameLayout(this);
         surface = new SeveredChainsSurfaceView(this);
+        PlatformManagerFactory.setFactory(() -> {
+            final AndroidPlatformManager manager =
+                new AndroidPlatformManager(this, surface, surface.inputState());
+            surface.attachPlatformManager(manager);
+            return manager;
+        });
         root.addView(surface);
 
-        final FrameLayout controls = new FrameLayout(this);
+        controls = new FrameLayout(this);
         status = new TextView(this);
         status.setTextColor(0xffffffff);
         status.setTextSize(16);
@@ -66,12 +96,36 @@ public final class MainActivity extends Activity {
         root.addView(controls, new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.MATCH_PARENT));
+
+        splash = new ImageView(this);
+        splash.setBackgroundColor(0xff000000);
+        splash.setImageResource(R.drawable.dragoon_icon_art);
+        splash.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        root.addView(splash, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT));
+
         setContentView(root);
         hideSystemUi();
-        if (gameDataStore.getImportedFileCount() >= 4) {
+        if (gameDataStore.hasCompleteDiscSet()) {
             surface.startEngine();
-            status.append("\nStarting Severed Chains...");
+            controls.setVisibility(android.view.View.GONE);
+            dismissSplash(1_200L);
+        } else {
+            dismissSplash(500L);
         }
+    }
+
+    private void dismissSplash(final long delayMillis) {
+        splash.animate()
+            .alpha(0.0f)
+            .setStartDelay(delayMillis)
+            .setDuration(200L)
+            .withEndAction(() -> {
+                final android.view.ViewParent parent = splash.getParent();
+                if(parent instanceof FrameLayout frameLayout) frameLayout.removeView(splash);
+            })
+            .start();
     }
 
     @Override
@@ -110,11 +164,15 @@ public final class MainActivity extends Activity {
                 Log.i(TAG, "Imported " + imported.size() + " selected file(s); total available="
                     + gameDataStore.getImportedFileCount());
                 runOnUiThread(() -> {
+                    final boolean ready = gameDataStore.hasCompleteDiscSet();
                     status.setText("ISO files copied to " + gameDataStore.getDataDirectory() + "\n"
                         + gameDataStore.getImportSummary() + "\n"
                         + GameDataInspector.inspect(gameDataStore.getImportedFiles())
-                        + "\nStarting Severed Chains...");
-                    surface.startEngine();
+                        + (ready ? "\nStarting Severed Chains..." : "\nSelect the missing or correct disc image(s)."));
+                    if (ready) {
+                        surface.startEngine();
+                        controls.setVisibility(android.view.View.GONE);
+                    }
                     select.setEnabled(true);
                             });
             } catch (final IOException exception) {
@@ -146,5 +204,19 @@ public final class MainActivity extends Activity {
             controller.setSystemBarsBehavior(
                 WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (surface != null) surface.onResume();
+        hideSystemUi();
+    }
+
+    @Override
+    protected void onPause() {
+        if (surface != null && isFinishing()) surface.shutdownEngine();
+        if (surface != null) surface.onPause();
+        super.onPause();
     }
 }

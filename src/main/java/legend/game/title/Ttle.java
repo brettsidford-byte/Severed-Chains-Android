@@ -1,6 +1,6 @@
 package legend.game.title;
 
-import de.jcm.discordgamesdk.activity.Activity;
+import discord.RichPresenceActivity;
 import it.unimi.dsi.fastutil.objects.Object2BooleanFunction;
 import legend.core.Async;
 import legend.core.MathHelper;
@@ -63,6 +63,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -589,7 +590,7 @@ public class Ttle extends EngineState<Ttle> {
     this.fadeOutTimer_800c6754++;
 
     if(this.fadeOutTimer_800c6754 >= 16 && (this.menuLoadAction == null || this.menuLoadAction.isDone()) && this.menuTransitionState_800c6728 == 2) {
-      initMenu(WhichMenu.RENDER_NEW_MENU, () -> this.asyncScreen = destScreen.apply(this.menuLoadAction != null ? (T)this.menuLoadAction.resultNow() : null));
+      initMenu(WhichMenu.RENDER_NEW_MENU, () -> this.asyncScreen = destScreen.apply(this.menuLoadAction != null ? (T)completedResult(this.menuLoadAction) : null));
       removeInputHandlers();
       this.deallocate();
       this.menuTransitionState_800c6728 = 3;
@@ -614,7 +615,18 @@ public class Ttle extends EngineState<Ttle> {
   }
 
   private <U extends MenuScreen> void fadeOutToMenu(final Supplier<U> destScreen, final Object2BooleanFunction<U> transition) {
-    this.fadeOutToMenuAsync(null, _ -> destScreen.get(), transition);
+    this.fadeOutToMenuAsync(null, ignored -> destScreen.get(), transition);
+  }
+
+  private static Object completedResult(final Future<?> future) {
+    try {
+      return future.get();
+    } catch(final InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    } catch(final ExecutionException e) {
+      throw new RuntimeException(e.getCause());
+    }
   }
 
   private void fadeOutForQuit() {
@@ -1532,7 +1544,7 @@ public class Ttle extends EngineState<Ttle> {
   }
 
   @Override
-  public void updateDiscordRichPresence(final GameState52c gameState, final Activity activity) {
+  public void updateDiscordRichPresence(final GameState52c gameState, final RichPresenceActivity activity) {
     activity.setDetails("Title Screen");
     activity.setState(null);
   }

@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,7 +31,7 @@ public class FontManager {
     LOGGER.info("Loading font %s", path);
 
     try {
-      final JSONObject file = new JSONObject(Files.readString(path));
+      final JSONObject file = new JSONObject(new String(Files.readAllBytes(path), StandardCharsets.UTF_8));
 
       final String name = file.getString("name");
       final JSONObject jsonGlyphs = file.getJSONObject("glyphs");
@@ -38,7 +39,9 @@ public class FontManager {
       final Char2ObjectMap<Glyph> glyphs = new Char2ObjectOpenHashMap<>();
       final Font font = new Font(path, new I18nText(name), glyphs);
 
-      for(final String key : jsonGlyphs.keySet()) {
+      final var keys = jsonGlyphs.keys();
+      while(keys.hasNext()) {
+        final String key = keys.next();
         final char chr;
         if(key.length() == 1) {
           chr = key.charAt(0);

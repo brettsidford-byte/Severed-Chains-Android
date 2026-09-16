@@ -51,7 +51,7 @@ import org.joml.Math;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.lwjgl.BufferUtils;
+import legend.core.DirectBuffers;
 
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -827,7 +827,7 @@ public class RetailSubmap extends Submap {
     final SubmapEnvironmentTextureEvent event = EVENTS.postEvent(new SubmapEnvironmentTextureEvent(this.smap, gameState_800babc8, this, drgnBinIndex_800bc058, this.cut, this.envForegroundTextureCount_800cb580));
 
     this.backgroundRect = Rect4i.bound(rects);
-    final IntBuffer empty = BufferUtils.createIntBuffer(this.backgroundRect.w * this.backgroundRect.h);
+    final IntBuffer empty = DirectBuffers.ints(this.backgroundRect.w * this.backgroundRect.h);
 
     if(event.background != null) {
       this.backgroundTexture = event.background;

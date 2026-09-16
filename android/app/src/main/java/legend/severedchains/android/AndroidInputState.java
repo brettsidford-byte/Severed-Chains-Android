@@ -18,7 +18,7 @@ public final class AndroidInputState {
     private final boolean[] pressed = new boolean[InputButton.values().length];
     private final float[] axes = new float[InputAxis.values().length];
 
-    public boolean onKeyDown(final int keyCode, final KeyEvent event) {
+    public synchronized boolean onKeyDown(final int keyCode, final KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BUTTON_L2) {
             axes[InputAxis.LEFT_TRIGGER.ordinal()] = 1.0f;
             return true;
@@ -40,7 +40,7 @@ public final class AndroidInputState {
         return true;
     }
 
-    public boolean onKeyUp(final int keyCode, final KeyEvent event) {
+    public synchronized boolean onKeyUp(final int keyCode, final KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BUTTON_L2) {
             axes[InputAxis.LEFT_TRIGGER.ordinal()] = 0.0f;
             return true;
@@ -58,7 +58,7 @@ public final class AndroidInputState {
         return true;
     }
 
-    public boolean onGenericMotion(final MotionEvent event) {
+    public synchronized boolean onGenericMotion(final MotionEvent event) {
         if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == 0
             && (event.getSource() & InputDevice.SOURCE_GAMEPAD) == 0) {
             return false;
@@ -75,22 +75,40 @@ public final class AndroidInputState {
             MotionEvent.AXIS_BRAKE);
         axes[InputAxis.RIGHT_TRIGGER.ordinal()] = trigger(event, MotionEvent.AXIS_RTRIGGER,
             MotionEvent.AXIS_GAS);
+
+        // The RG405V exposes its D-pad through the joystick hat axes rather
+        // than KEYCODE_DPAD_* events. Fold those axes into the same button
+        // state used by configurable ButtonInputActivation bindings.
+        final float hatX = axis(event, MotionEvent.AXIS_HAT_X);
+        final float hatY = axis(event, MotionEvent.AXIS_HAT_Y);
+        setHeld(InputButton.DPAD_LEFT, hatX < -0.5f);
+        setHeld(InputButton.DPAD_RIGHT, hatX > 0.5f);
+        setHeld(InputButton.DPAD_UP, hatY < -0.5f);
+        setHeld(InputButton.DPAD_DOWN, hatY > 0.5f);
         return true;
     }
 
-    public boolean isHeld(final InputButton button) {
+    private void setHeld(final InputButton button, final boolean value) {
+        final int index = button.ordinal();
+        if (value && !held[index]) {
+            pressed[index] = true;
+        }
+        held[index] = value;
+    }
+
+    public synchronized boolean isHeld(final InputButton button) {
         return held[button.ordinal()];
     }
 
-    public boolean wasPressed(final InputButton button) {
+    public synchronized boolean wasPressed(final InputButton button) {
         return pressed[button.ordinal()];
     }
 
-    public float axis(final InputAxis axis) {
+    public synchronized float axis(final InputAxis axis) {
         return axes[axis.ordinal()];
     }
 
-    public void clearPressed() {
+    public synchronized void clearPressed() {
         for (int i = 0; i < pressed.length; i++) {
             pressed[i] = false;
         }
@@ -115,7 +133,7 @@ public final class AndroidInputState {
         return value != 0.0f ? value : axis(event, fallback);
     }
 
-    private static InputButton buttonForKey(final int keyCode) {
+    public static InputButton buttonForKey(final int keyCode) {
         return switch (keyCode) {
             case KeyEvent.KEYCODE_DPAD_UP -> InputButton.DPAD_UP;
             case KeyEvent.KEYCODE_DPAD_DOWN -> InputButton.DPAD_DOWN;

@@ -233,9 +233,10 @@ public abstract class QueuedModel<Options extends ShaderOptionsBase, T extends Q
   }
 
   protected void updateColours(@Nullable final Translucency translucency) {
-    switch(translucency) {
-      case B_PLUS_QUARTER_F -> this.shaderOptions.colour(this.colour.mul(0.25f, this.tempColour));
-      case null, default -> this.shaderOptions.colour(this.colour);
+    if(translucency == Translucency.B_PLUS_QUARTER_F) {
+      this.shaderOptions.colour(this.colour.mul(0.25f, this.tempColour));
+    } else {
+      this.shaderOptions.colour(this.colour);
     }
   }
 

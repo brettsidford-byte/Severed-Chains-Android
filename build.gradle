@@ -142,6 +142,13 @@ jar {
   }
 }
 
+tasks.register('precompileAndroidShaders', JavaExec) {
+  dependsOn classes
+  classpath = sourceSets.main.runtimeClasspath
+  mainClass = 'legend.core.renderer.opengles.GlesShaderPrecompiler'
+  args file('gfx/shaders').absolutePath, file('android/app/src/main/gles-shaders').absolutePath
+}
+
 tasks.register('updaterJar', Jar) {
   archiveBaseName = 'updater'
   archiveVersion = ''

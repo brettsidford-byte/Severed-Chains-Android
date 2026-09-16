@@ -1,6 +1,7 @@
 package legend.core.gpu;
 
 import legend.core.MathHelper;
+import legend.core.DirectBuffers;
 import legend.core.renderer.Mesh;
 import legend.core.renderer.ProjectionMode;
 import legend.core.renderer.RenderEngine;
@@ -18,7 +19,6 @@ import legend.game.unpacker.FileData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Matrix4f;
-import org.lwjgl.BufferUtils;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -53,7 +53,7 @@ public class Gpu {
   private Shader<SimpleShaderOptions> vramShader;
   private SimpleShaderOptions vramShaderOptions;
   private ShaderUniformBuffer transforms2Uniform;
-  private final FloatBuffer transforms2Buffer = BufferUtils.createFloatBuffer(4 * 4 + 4);
+  private final FloatBuffer transforms2Buffer = DirectBuffers.floats(4 * 4 + 4);
   private final Matrix4f identity = new Matrix4f();
 
   private Texture displayTexture;

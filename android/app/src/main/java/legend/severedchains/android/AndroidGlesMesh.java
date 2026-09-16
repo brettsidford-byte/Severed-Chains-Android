@@ -379,7 +379,12 @@ public final class AndroidGlesMesh implements Mesh {
 
     @Override
     public void draw(final int start, final int count) {
-        if (deleted || count <= 0) return;
+        if (deleted) return;
+        if (count == 0) {
+            draw();
+            return;
+        }
+        if (count < 0) throw new IllegalArgumentException("Mesh draw count cannot be negative");
         GLES30.glBindVertexArray(vao);
         if (useIndices) {
             GLES30.glDrawRangeElements(primitiveMode, start, start + count - 1, count,

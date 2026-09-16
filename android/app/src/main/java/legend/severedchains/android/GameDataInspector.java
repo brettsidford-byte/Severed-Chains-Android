@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public final class GameDataInspector {
     private static final Map<String, String> DISC_IDS = new LinkedHashMap<>();
@@ -39,6 +41,15 @@ public final class GameDataInspector {
             result.append("\nExtraction is not started");
         }
         return result.toString();
+    }
+
+    public static boolean hasCompleteDiscSet(final List<File> files) {
+        final Set<String> found = new HashSet<>();
+        for (final File file : files) {
+            final String id = identify(file);
+            if (id != null) found.add(id);
+        }
+        return found.containsAll(DISC_IDS.keySet());
     }
 
     public static String identify(final File file) {

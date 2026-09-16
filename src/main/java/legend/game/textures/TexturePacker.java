@@ -2,6 +2,7 @@ package legend.game.textures;
 
 import legend.core.gpu.Bpp;
 import legend.core.gpu.Rect4i;
+import legend.core.DirectBuffers;
 import legend.core.renderer.Obj;
 import legend.core.renderer.QuadBuilder;
 import legend.core.renderer.Texture;
@@ -9,17 +10,13 @@ import legend.core.renderer.TextureDataFormat;
 import legend.core.renderer.TextureDataType;
 import legend.core.renderer.TextureInternalFormat;
 import org.legendofdragoon.modloader.registries.RegistryId;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.stb.STBRPContext;
-import org.lwjgl.stb.STBRPNode;
-import org.lwjgl.stb.STBRPRect;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
-
-import static org.lwjgl.stb.STBRectPack.stbrp_init_target;
-import static org.lwjgl.stb.STBRectPack.stbrp_pack_rects;
 
 public class TexturePacker {
   public final String name;
@@ -44,44 +41,34 @@ public class TexturePacker {
   }
 
   public byte[] packToBytes(final int width, final int height) {
-    final STBRPContext ctx = STBRPContext.malloc();
-    final STBRPNode.Buffer nodes = STBRPNode.malloc(width); // documentation says that nodes should be >= width
-    final STBRPRect.Buffer rectBuffer = STBRPRect.malloc(this.entryToRect.size());
-
-    int i = 0;
-    for(final Rect4i icon : this.entryToRect.values()) {
-      final STBRPRect rect = rectBuffer.get(i++);
-      rect.x(icon.x);
-      rect.y(icon.y);
-      rect.w(icon.w);
-      rect.h(icon.h);
+    final List<Map.Entry<RegistryId, Rect4i>> entries = new ArrayList<>(this.entryToRect.entrySet());
+    entries.sort(Comparator.<Map.Entry<RegistryId, Rect4i>>comparingInt(entry -> entry.getValue().h)
+      .thenComparingInt(entry -> entry.getValue().w).reversed()
+      .thenComparing(entry -> entry.getKey().toString()));
+    int x = 0;
+    int y = 0;
+    int rowHeight = 0;
+    for(final Map.Entry<RegistryId, Rect4i> entry : entries) {
+      final Rect4i icon = entry.getValue();
+      if(icon.w > width || icon.h > height) throw new RuntimeException("Texture atlas entry is larger than the atlas: " + entry.getKey());
+      if(x + icon.w > width) {
+        x = 0;
+        y += rowHeight;
+        rowHeight = 0;
+      }
+      if(y + icon.h > height) throw new RuntimeException("Failed to pack texture atlas");
+      icon.x = x;
+      icon.y = y;
+      x += icon.w;
+      rowHeight = Math.max(rowHeight, icon.h);
     }
-
-    stbrp_init_target(ctx, width, height, nodes);
-
-    if(stbrp_pack_rects(ctx, rectBuffer) == 0) {
-      throw new RuntimeException("Failed to pack texture atlas");
-    }
-
-    i = 0;
-    for(final Rect4i icon : this.entryToRect.values()) {
-      final STBRPRect rect = rectBuffer.get(i++);
-      icon.x = rect.x();
-      icon.y = rect.y();
-      icon.w = rect.w();
-      icon.h = rect.h();
-    }
-
-    rectBuffer.free();
-    nodes.free();
-    ctx.free();
 
     return this.buildTexture(width, height);
   }
 
   public TextureAtlas pack(final int width, final int height) {
     final byte[] packedData = this.packToBytes(width, height);
-    final ByteBuffer buffer = BufferUtils.createByteBuffer(packedData.length);
+    final ByteBuffer buffer = DirectBuffers.bytes(packedData.length);
     buffer.put(0, packedData);
 
     final Texture texture = Texture.create("Atlas " + this.name, builder -> {

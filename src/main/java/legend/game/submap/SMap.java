@@ -1,6 +1,6 @@
 package legend.game.submap;
 
-import de.jcm.discordgamesdk.activity.Activity;
+import discord.RichPresenceActivity;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import legend.core.IoHelper;
@@ -5708,7 +5708,7 @@ public class SMap extends EngineState<SMap> {
   }
 
   @Override
-  public void updateDiscordRichPresence(final GameState52c gameState, final Activity activity) {
+  public void updateDiscordRichPresence(final GameState52c gameState, final RichPresenceActivity activity) {
     super.updateDiscordRichPresence(gameState, activity);
     activity.setState("Exploring");
   }

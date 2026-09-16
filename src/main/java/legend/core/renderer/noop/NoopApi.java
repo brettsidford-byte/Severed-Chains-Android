@@ -5,9 +5,7 @@ import legend.core.renderer.DepthComparator;
 import legend.core.renderer.FrameBuffer;
 import legend.core.renderer.FrameBufferAttachment;
 import legend.core.renderer.Mesh;
-import legend.core.renderer.QueuedModel;
 import legend.core.renderer.RenderApi;
-import legend.core.renderer.RenderBatch;
 import legend.core.renderer.Shader;
 import legend.core.renderer.ShaderOptions;
 import legend.core.renderer.ShaderUniformBuffer;
@@ -17,6 +15,7 @@ import legend.core.renderer.TextureDataType;
 import legend.core.renderer.TextureInternalFormat;
 import legend.core.renderer.Translucency;
 import legend.core.renderer.VertexOrder;
+import legend.core.gpu.Rect4i;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -112,7 +111,9 @@ public class NoopApi implements RenderApi {
   }
 
   @Override
-  public void initBatch(final RenderBatch batch) {
+  public void initBatch(final boolean widescreen, final boolean forced4By3,
+                        final float nativeWidth, final float nativeHeight,
+                        final float expectedWidth, final float widescreenOrthoOffsetX) {
 
   }
 
@@ -132,7 +133,9 @@ public class NoopApi implements RenderApi {
   }
 
   @Override
-  public void scissor(final QueuedModel<?, ?> model, final FloatBuffer scissorBuffer, final ShaderUniformBuffer scissorUniform) {
+  public void scissor(final Rect4i worldScissor, final Rect4i modelScissor,
+                      final FloatBuffer scissorBuffer,
+                      final ShaderUniformBuffer scissorUniform) {
 
   }
 

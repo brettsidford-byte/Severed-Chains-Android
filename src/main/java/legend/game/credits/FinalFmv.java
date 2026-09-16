@@ -1,6 +1,6 @@
 package legend.game.credits;
 
-import de.jcm.discordgamesdk.activity.Activity;
+import discord.RichPresenceActivity;
 import legend.core.memory.Method;
 import legend.core.tags.Tag;
 import legend.game.EngineState;
@@ -47,7 +47,7 @@ public class FinalFmv extends EngineState<FinalFmv> {
   }
 
   @Override
-  public void updateDiscordRichPresence(final GameState52c gameState, final Activity activity) {
+  public void updateDiscordRichPresence(final GameState52c gameState, final RichPresenceActivity activity) {
     super.updateDiscordRichPresence(gameState, activity);
     activity.setState("Final Cutscene");
   }

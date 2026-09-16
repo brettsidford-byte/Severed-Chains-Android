@@ -29,7 +29,7 @@ import legend.game.textures.TexturePacker;
 import legend.game.types.GameState52c;
 import legend.game.unpacker.FileData;
 import org.legendofdragoon.modloader.registries.RegistryId;
-import org.lwjgl.BufferUtils;
+import legend.core.DirectBuffers;
 
 import java.nio.ByteBuffer;
 
@@ -157,7 +157,7 @@ public final class V10Serializer {
     }
 
     final byte[] atlas = packer.packToBytes(512, 512);
-    final ByteBuffer buffer = BufferUtils.createByteBuffer(atlas.length);
+    final ByteBuffer buffer = DirectBuffers.bytes(atlas.length);
     buffer.put(0, atlas);
     final byte[] compressed = PngWriter.compress(buffer, 512, 512);
 

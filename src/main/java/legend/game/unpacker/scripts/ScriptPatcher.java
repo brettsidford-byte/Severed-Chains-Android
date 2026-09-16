@@ -238,7 +238,7 @@ public class ScriptPatcher {
   }
 
   public void replaceFile(final Path sourceFile, final Path patchFile) throws IOException {
-    final String patchContents = Files.readString(patchFile);
+    final String patchContents = new String(Files.readAllBytes(patchFile), java.nio.charset.StandardCharsets.UTF_8);
     final byte[] recompiledSource = this.recompile(sourceFile.toString(), patchContents);
     Files.write(sourceFile, recompiledSource, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
   }

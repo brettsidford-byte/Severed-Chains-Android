@@ -53,7 +53,7 @@ import static legend.game.Text.renderText;
 import static legend.game.modding.coremod.CoreMod.ALLOW_WIDESCREEN_CONFIG;
 import static legend.game.modding.coremod.CoreMod.INPUT_ACTION_FMV_SKIP;
 import static legend.game.sound.Audio.sssqResetStuff;
-import static org.lwjgl.openal.AL10.AL_FORMAT_STEREO16;
+import static legend.core.audio.AudioFormat.STEREO_16;
 
 public final class Fmv {
   private Fmv() { }
@@ -339,7 +339,7 @@ public final class Fmv {
     RENDERER.setProjectionSize(320, 240);
     RENDERER.api().clearColour(0.0f, 0.0f, 0.0f);
 
-    source = AUDIO_THREAD.addSource(new GenericSource(AL_FORMAT_STEREO16, 37800));
+    source = AUDIO_THREAD.addSource(new GenericSource(STEREO_16, 37800));
     volume = CONFIG.getConfig(CoreMod.FMV_VOLUME_CONFIG.get()) * CONFIG.getConfig(CoreMod.MASTER_VOLUME_CONFIG.get());
 
     skipButton = null;

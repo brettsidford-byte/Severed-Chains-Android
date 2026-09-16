@@ -1,6 +1,7 @@
 package legend.game.fmv;
 
 import legend.core.Config;
+import legend.core.DirectBuffers;
 import legend.core.audio.GenericSource;
 import legend.core.gpu.Bpp;
 import legend.core.platform.WindowEvents;
@@ -21,7 +22,6 @@ import org.bytedeco.javacv.Frame;
 import org.joml.Matrix4f;
 import org.joml.Vector2i;
 import org.joml.Vector3i;
-import org.lwjgl.system.MemoryUtil;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -38,7 +38,7 @@ import static legend.game.Graphics.clearBlue_800babc0;
 import static legend.game.Graphics.clearGreen_800bb104;
 import static legend.game.Graphics.clearRed_8007a3a8;
 import static legend.game.modding.coremod.CoreMod.ALLOW_WIDESCREEN_CONFIG;
-import static org.lwjgl.openal.AL10.AL_FORMAT_STEREO16;
+import static legend.core.audio.AudioFormat.STEREO_16;
 
 public final class VideoPlayer {
   private VideoPlayer() { }
@@ -117,9 +117,32 @@ public final class VideoPlayer {
     buttonPressed = RENDERER.events().onButtonPress((window, action, repeat) -> shouldStop = true);
     click = RENDERER.events().onMouseRelease((window, x, y, button, mods) -> shouldStop = true);
 
-    source = AUDIO_THREAD.addSource(new GenericSource(AL_FORMAT_STEREO16, 48_000));
+    source = AUDIO_THREAD.addSource(new GenericSource(STEREO_16, 48_000));
     final float volume = CONFIG.getConfig(CoreMod.FMV_VOLUME_CONFIG.get()) * CONFIG.getConfig(CoreMod.MASTER_VOLUME_CONFIG.get());
 
+    if(PLATFORM.preparesFmvAsynchronously()) {
+      oldRenderer = RENDERER.setRenderCallback(() -> {
+        if(onRender != null) onRender.run();
+      });
+      final Thread preparation = new Thread(() -> {
+        try {
+          preparePlayback(volume);
+          PLATFORM.runOnRenderThread(() -> installPlaybackRenderer(false));
+        } catch(final Exception e) {
+          LOGGER.warn("Failed to prepare FMV", e);
+          PLATFORM.runOnRenderThread(VideoPlayer::stop);
+        }
+      }, "severed-chains-fmv-prepare");
+      preparation.setDaemon(true);
+      preparation.start();
+      return;
+    }
+
+    preparePlayback(volume);
+    installPlaybackRenderer(true);
+  }
+
+  private static void preparePlayback(final float volume) throws FFmpegFrameGrabber.Exception {
     // Buffer audio
     grabber.setCloseInputStream(false);
 
@@ -129,14 +152,12 @@ public final class VideoPlayer {
     final double durationSec = grabber.getLengthInTime() / 1_000_000.0;
     final int maxBytes = (int)(durationSec * sampleRate * channels * 2) + 4096; // 4kb padding
 
-    pcmBuffer = MemoryUtil.memAlloc(maxBytes);
+    pcmBuffer = DirectBuffers.bytes(maxBytes);
 
-    while((currentFrame = grabber.grabFrame()) != null) {
-      if(currentFrame.samples != null) {
-        final ShortBuffer sb = (ShortBuffer)currentFrame.samples[0];
-        for(int i = 0; i < sb.limit(); i++) {
-          pcmBuffer.putShort((short)(sb.get(i) * volume));
-        }
+    while((currentFrame = grabber.grabSamples()) != null) {
+      final ShortBuffer sb = (ShortBuffer)currentFrame.samples[0];
+      for(int i = 0; i < sb.limit(); i++) {
+        pcmBuffer.putShort((short)(sb.get(i) * volume));
       }
     }
 
@@ -148,8 +169,10 @@ public final class VideoPlayer {
     grabber.setCloseInputStream(true);
 
     currentFrame = grabber.grabImage();
+  }
 
-    oldRenderer = RENDERER.setRenderCallback(() -> {
+  private static void installPlaybackRenderer(final boolean saveOldRenderer) {
+    final Runnable previousRenderer = RENDERER.setRenderCallback(() -> {
       if(onRender != null) {
         onRender.run();
       }
@@ -189,6 +212,11 @@ public final class VideoPlayer {
           // IN SYNC: decode and process the frame
           final ByteBuffer buffer = (ByteBuffer)currentFrame.image[0];
           displayTexture.data(0, 0, videoWidth, videoHeight, TextureDataType.UBYTE, buffer);
+          currentFrame = grabber.grabImage();
+          if(currentFrame == null) {
+            stop();
+            return;
+          }
           break;
         }
       } catch(final Exception e) {
@@ -234,6 +262,7 @@ public final class VideoPlayer {
 
       lastPosition = source.getPosition();
     });
+    if(saveOldRenderer) oldRenderer = previousRenderer;
   }
 
   public static void stop() {
@@ -296,7 +325,6 @@ public final class VideoPlayer {
       onFinish = null;
 
       if(pcmBuffer != null) {
-        MemoryUtil.memFree(pcmBuffer);
         pcmBuffer = null;
       }
 

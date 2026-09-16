@@ -1,5 +1,6 @@
 package legend.core.renderer;
 
+import legend.core.gpu.Rect4i;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.Buffer;
@@ -30,11 +31,13 @@ public interface RenderApi {
   void unbindFramebuffer();
   void unbindTexture();
 
-  void initBatch(final RenderBatch batch);
+  void initBatch(boolean widescreen, boolean forced4By3, float nativeWidth,
+                 float nativeHeight, float expectedWidth, float widescreenOrthoOffsetX);
   void backfaceCulling(final boolean enable);
   void enableDepthTest(final DepthComparator comparator);
   void disableDepthTest();
-  void scissor(final QueuedModel<?, ?> model, final FloatBuffer scissorBuffer, final ShaderUniformBuffer scissorUniform);
+  void scissor(Rect4i worldScissor, Rect4i modelScissor,
+               FloatBuffer scissorBuffer, ShaderUniformBuffer scissorUniform);
   void translucency(@Nullable final Translucency translucency);
 
   void wireframe(final boolean enable);

@@ -1,5 +1,82 @@
 # Android port development log
 
+## 2026-09-16 — playable 0.9.0 RG405V baseline
+
+- Completed the shared-engine Android path and removed the superseded renderer,
+  engine-host, source-copy, and diagnostic-probe implementations.
+- Corrected GLES depth, shader, texture, batching, and projection behaviour so
+  submap and battle models, scene lighting, mist, clouds, and sunlight render
+  with the pre-rendered backgrounds.
+- Corrected Android frame presentation and FMV preparation so intro video,
+  title crawl, battles, and character motion no longer retain or overlap old
+  frames; retained the normal main-game background path.
+- Added Android audio, Opus/FFmpeg, PNG, rich-presence, updater, and VRAM-dump
+  service boundaries while preserving their desktop implementations.
+- Moved disc imports, extracted data, configuration, and saves into the app's
+  writable private storage; verified save and load across APK updates.
+- Connected physical gamepad buttons, D-pad, analogue axes, and rebinding to the
+  upstream input-action system, including raw-button consumers such as FMV skip.
+- Added the black native/app splash sequence, Android launcher artwork, vivid
+  A/B/X/Y controller glyphs, task-aware title quit, and faster in-game quit-menu
+  transitions.
+- Removed the final unused standard-shader probe helpers and excluded local
+  builds, APKs, screenshots, caches, and ADB credentials from version control.
+- Verified a clean-source ARM64 debug build as version code 10 / version
+  `0.9.0-debug`; tested gameplay target remains the Anbernic RG405V.
+
+## 2026-09-13 — ART startup compatibility and extraction heap
+
+- Made bundled mod discovery tolerate ART classes with no protection domain/code source.
+- Made bundled locale discovery avoid desktop JAR enumeration when ART provides no code source; direct resource lookup and fallback remain intact.
+- Replaced bundled-listener `Method.canAccess` use with a modifier check after RG405V ART reported that reflection method unavailable.
+- Replaced the render-thread probe's contextless `glGetString` call with `eglGetCurrentContext`; the former caused a native Mali/GLES SIGSEGV when the engine requested render-thread work from its hardware thread.
+- Made GLES integer-to-float compatibility rewrites idempotent; the prior literal replacement changed already-correct generated values such as `1.0` into invalid `1.0.0`, which the RG405V Mali compiler rejected.
+- Rebuilt runtime script include loading around UTF-8 `Files.readAllBytes` after completed extraction exposed ART's missing `Files.readString` method.
+- Gated Android frame dispatch until `PlatformManager.run()` begins, preventing the live GL thread from iterating input bindings while upstream startup is still registering them.
+- Allocate upstream floating-point depth textures as GLES `DEPTH_COMPONENT32F`; pairing `DEPTH_COMPONENT24` with `FLOAT` caused `GL_INVALID_OPERATION` on the RG405V Mali driver.
+- Changed FMV audio prebuffering to `grabSamples()` so intro preparation no longer decodes and discards every video frame synchronously on the Android GL thread; playback content and timing remain unchanged on desktop and Android.
+- Moved Android `AudioTrack` streaming writes onto each sink's bounded single-writer queue. Large upstream buffers (notably intro PCM) no longer block the GLES frame that submitted them, while ordering and the engine's buffer-capacity contract are preserved.
+- Added a platform capability for asynchronous FMV preparation and enabled it on Android, keeping demux/audio preparation off the event-driven GLES thread while desktop retains synchronous startup semantics.
+- Bounded `IoHelper.pathToByteBuffer` reads by the allocated file size. Android's channel returns zero when a full destination buffer has no remaining space, so waiting only for EOF spun the GLES thread indefinitely while loading the first UI texture.
+- Replaced reflective access to JDK-internal `java.util.TimSort` with the public stable `Arrays.sort` API. ART does not expose the desktop implementation's private seven-argument method, and the public path preserves render-queue comparator ordering on both platforms.
+- Forwarded Android gamepad button press/release events through the upstream `WindowEvents` controller contract in addition to configurable action-state mapping. This restores raw-button consumers such as FMV skipping without adding touchscreen controls.
+- Resolved legacy desktop-relative resource reads against the configured `GamePaths` runtime root, including title/menu textures and goods discovery. Android has no repository working directory, even though the complete original open-source `gfx` tree is materialized in app storage.
+- Made Android depth clears temporarily enable depth writes and explicitly clear to 1.0 before restoring translucent-pass state. GLES depth clears honour `glDepthMask`, so a prior translucent pass could retain stale depth and allow the orthographic submap backdrop to obscure 3D models.
+- Rebuilt the Java 17 script-recompiler compatibility artifact with explicit Log4j logger classes for runtime-used translator/disassembler/token code.
+- Requested Android's large heap class for the one-time upstream ISO extraction and script-patching pass after RG405V evidence showed the 192 MB default heap was exhausted.
+
+## 2026-09-12 — Java 17 engine-source compatibility
+
+- Removed the remaining Java 21+ null-switch and unnamed-lambda syntax from shared renderer/title code without changing its behaviour.
+- This keeps the upstream sources parseable by the Android module's Java 17 toolchain while preserving both desktop GL backends.
+- Build/test: desktop and Android compilation required; device testing remains deferred until the complete engine path is assembled.
+
+## 2026-09-12 — Android RenderApi state operations
+
+- Added the upstream clear-colour, viewport, uniform-buffer, framebuffer/texture unbind, culling, depth-test, blend-mode, wireframe-capability and debug-capability operations to the Android GLES facade.
+- Added upstream `DepthComparator` sharing and texture-unit state tracking so Android resource binding follows the desktop GLES backend's contract.
+- Build/test: Android compilation required; no APK installation until the complete engine path is assembled.
+
+## 2026-09-13 — upstream texture and framebuffer resources
+
+- Removed `Texture`, `TextureBuilder`, and `FrameBuffer` construction-time dependencies on the static desktop `GameEngine` and moved PNG decoding behind a platform service; desktop retains STB and Android uses `BitmapFactory` to produce the same RGBA input.
+- Android textures now implement the upstream `Texture` format, update, binding, filtering, wrapping and deferred-deletion contract; Android framebuffers now implement upstream attachment-based `FrameBuffer` construction.
+- Installed the Android renderer resource factory at GLES-context creation while retaining the old framebuffer capability probe until the real engine replaces the diagnostic backend.
+- Build/test: desktop and Android compilation required; device testing remains deferred until the complete engine path is assembled.
+
+## 2026-09-13 — real upstream RenderApi implementation
+
+- Made `AndroidGlesRenderApi` implement the actual shared `RenderApi`, including upstream mesh, texture, framebuffer, shader, uniform-buffer, render-state and scissor contracts.
+- Moved batch/scissor inputs in `RenderApi` to renderer-neutral values so Android no longer needs game/config classes merely to compile the GPU backend; desktop GL, desktop GLES and no-op backends preserve the previous calculations.
+- Build/test: desktop compile and Android APK build required; no device installation until the engine lifecycle integration is complete.
+
+## 2026-09-13 — Android PlatformManager and Window contracts
+
+- Added Android implementations of the shared `PlatformManager` and `Window` contracts, backed by the existing `GLSurfaceView`, with frame dispatch, surface resize delivery, fullscreen requests, gamepad discovery, action-state storage, URL handling and Android vibration.
+- Made platform default-fullscreen selection and desktop manager construction injectable so shared platform contracts compile without SDL or game-config dependencies; desktop initialisation retains its previous behaviour.
+- Registered the Android platform factory before future `GameEngine` initialisation while leaving the diagnostic bridge active until the engine source graph is connected.
+- Build/test: forced desktop compile and Android APK build succeeded; no device installation performed.
+
 ## 2026-09-11 — storage and diagnostics milestone
 
 - Confirmed the multi-file import APK builds successfully in GitHub Actions and installs on the RG405V.
@@ -415,3 +492,67 @@
 - This matches the upstream texture API required by the eventual Android RenderApi adapter.
 - Desktop rendering and game logic are unchanged.
 - Build/test: Android compilation required.
+# 2026-09-13 - Java 17 engine dependency and desktop-service isolation
+
+- Added platform-neutral direct-buffer allocation for shared I/O, GPU, and render paths while preserving native-order direct buffers and desktop compilation.
+- Built Script Recompiler 0.7.11 as documented Java 17 bytecode from its AGPL upstream source, retaining the real scripting/mod pipeline for Android.
+- Moved Discord SDK access behind a reflection-loaded desktop backend so core game states compile without Discord native types and desktop rich presence remains available.
+- Forced desktop compilation succeeds; the Android engine compile now passes the Script Recompiler boundary and continues at remaining JavaFX, image, audio, updater, and native utility seams.
+
+# 2026-09-13 - Host lifecycle and image-decoder boundaries
+
+- Routed application exit and debugger launch through `PlatformManager`; Android closes its activity while SDL retains the JavaFX debugger behavior.
+- Reused the platform PNG decoder for game atlas images and replaced remaining shared render/atlas `MemoryStack` allocations with native-order direct buffers.
+- Desktop compilation and the diagnostic Android APK build succeed. The full engine compile is now narrowed to audio, updater, shader-transpilation, and desktop-only image-dump utilities.
+
+# 2026-09-13 - Complete upstream engine APK path
+
+- The Android application now compiles the complete upstream game source directly, with only desktop host implementations excluded; obsolete diagnostic shadow classes were removed.
+- Installed Android AudioTrack, FFmpeg Opus decode, MediaCodec Opus encode, Bitmap PNG, GLES resource, physical-controller binding, and render-thread lifecycle backends.
+- Bundled only the upstream open-source runtime `gfx`, `lang`, and `patches` trees and materialized them into the private game root; user ISO files remain external and are never packaged.
+- The real `GameEngine.start()` lifecycle now launches after both ISO availability and EGL readiness, with GPU creation/destruction marshalled onto the GLSurfaceView thread and a centered 640x480 viewport.
+- Build/test: full ARM64 debug APK assembly succeeds locally; device installation remains deliberately deferred until the remaining runtime audit is complete.
+
+# 2026-09-13 - Android/Dex built-in mod discovery
+
+- Added a documented Mod Loader 4.3.3 compatibility build that keeps desktop discovery intact while explicitly registering the three bundled mods and their event listeners on Android.
+- Packaged the bundled mod language resources and replaced the newer host-JDK `Locale.of` call with its Java 17/Android-compatible constructor.
+- This avoids Reflections/URLClassLoader startup failure against APK DEX storage while retaining the upstream registries, configuration, menus, and first-party mod event pipeline.
+- Build/test: Android ARM64 assembly and desktop compilation succeed; external desktop-JAR mod conversion remains a later compatibility stage.
+
+# 2026-09-13 - Device-ready GLES shader pipeline and engine-only frame path
+
+- Added deterministic host-side Shaderc/SPIRV-Cross precompilation for all 13 upstream shaders and an Android build check requiring GLSL ES 3.20 assets; the APK no longer attempts an incomplete source rewrite on device.
+- Requested a real GLES 3.2 EGL context for the upstream TMD geometry-shader path and retained the centered 640x480/4:3 default-framebuffer viewport.
+- Removed the obsolete diagnostic frame-loop fallback, matched upstream's `Mesh.draw(start, 0)` whole-mesh behavior, and made shader failures surface as explicit startup errors.
+- Added an activity-finish shutdown handoff so the upstream renderer can release GPU resources while the EGL thread is still available.
+- Build/test: ARM64 debug APK assembly succeeds with 13 GLES shaders, ARM64-only FFmpeg libraries, and zero ISO files; RG405V installation remains deferred pending completion of the runtime audit.
+
+# 2026-09-13 - Android host lifecycle and launch preflight hardening
+
+- Android now skips the desktop release/self-update channel, avoiding incorrect Linux ARM64 update offers while leaving desktop update checks unchanged.
+- Activity exit stops the real platform loop before pausing the GLES surface, allowing upstream GPU/audio cleanup to run on their owning threads.
+- Startup now requires four distinct recognised North American disc IDs; partial, duplicate, or unrelated imports remain available for correction but cannot launch the unpacker.
+- GLES context creation prefers an explicit 3.2 request, falls back to the driver's highest GLES 3 context, and verifies that the resulting context is at least GLES 3.2 before engine startup.
+- Build/test: ARM64 Android assembly and artifact audit pass with 13 GLES shaders and zero ISO files; device installation is now permitted after the desktop regression check.
+
+# 2026-09-13 - RG405V native-library package compatibility
+
+- The first post-audit install was rejected before application launch with `INSTALL_FAILED_INVALID_APK: Failed to extract native libraries`.
+- Enabled extracted/legacy JNI packaging for the ARM64 FFmpeg payload to match the RG405V package manager; no app data was changed by the rejected install.
+- Removed unused FFmpeg/FFprobe command-line executables from `lib/<abi>` because Android package managers require native entries there to be loadable libraries.
+- Build/test: the rebuilt 61.7 MB ARM64 APK installs successfully on RG405V07827893; all four original ISOs were then copied locally from the device's external storage into the new app-private directory and size-verified. Runtime launch has not yet been tested, so no gameplay success is claimed.
+
+# 2026-09-15 - FMV completion and Mali TMD interstage compatibility
+
+- RG405V FMV playback could remain on the final video frame because Android `AudioTrack` playback position stops at the end instead of wrapping like the desktop OpenAL source. The video renderer now decodes the next image immediately after presenting an in-sync frame and stops as soon as FFmpeg reports end-of-stream. The opening FMV was verified to advance through clean sequential frames and return to the campaign screen on-device.
+- TMD assets, transforms, projection data, meshes, index buffers, VRAM uploads, sampler assignments, and draw calls were all present with no GLES errors. Temporarily bypassing face rejection proved that the apparent screen-filling polygons were real scene geometry (including cloud, mist, and lighting layers) rendered with corrupted shader controls, not anomalous assets to remove.
+- Mali-G52 corrupted late members of the original mixed vertex/geometry interface block. A first compact integer-vector contract restored geometry but the driver still zeroed the texture-page Y and CLUT components. The TMD and battle-TMD stages now exchange five standalone varyings; two flat high-precision float control words compactly encode flags, BPP/translucency, texture-page coordinates, and CLUT coordinates. The GLES shader adapter now forces both float and integer high precision, because its former `mediump float` declaration overflowed the packed controls and also degraded geometry, depth, and lighting. This preserves the desktop culling and shading rules while avoiding the faulty Mali integer-vector transport.
+- Android texture binding now activates the requested texture unit even when the per-unit cached texture ID is unchanged, preventing later uploads or binds from operating on whichever unit happened to be globally active.
+- Device verification on RG405V07827893 against the supplied desktop reference: the forest background, full textured Dart model, distant models, sunlight beam, cloud/mist layers, dialogue, and scene advancement render coherently in the real game at the centred 640x480 composition. Consecutive intro and dialogue-motion captures replace prior poses cleanly, and sampled opening-FMV frames show no overlap; battle rendering still needs a direct persistence retest. Diagnostic solid-colour and VRAM readback probes were removed after verification; valid effect polygons remain enabled.
+
+# 2026-09-15 - Android low-rate presentation and writable saves
+
+- `GLSurfaceView` had remained in continuous roughly-60 Hz mode while the upstream scheduler intentionally rendered PS1 FMVs at 15 FPS, battles at 20 FPS, and other states at 30 FPS. Every empty `onDrawFrame` still performed `eglSwapBuffers`, cycling older Mali backbuffers between real engine frames and producing apparent trails, reversals, and ghosting. Android now starts continuously only long enough to create EGL, then uses render-when-dirty requests timed from the next scheduled platform action, so one surface swap corresponds to one engine update.
+- An on-device before/after screen recording confirmed that redundant presentation stopped: the recorder observed about 55 swaps/sec before the change and about 35 after it across the mixed 60 FPS launcher and 15 FPS PS1-FMV interval. Sampled post-fix frames advance monotonically, and GLES heartbeat checks remain `glError=0x0`. A direct battle-motion retest remains required.
+- `SaveManager` no longer binds itself to process-relative `saves`, which resolved to read-only `/saves` on Android. It now uses the configured `GamePaths.saves()` root. The desktop `new_campaign` directory (seven `.dsav` files plus `campaign_config.dcnf`) was copied into the app-private `files/saves` directory with matching SHA-256 hashes; an update install preserved all eight files, Continue became available, and the load-game screen listed the imported slots without the previous `/saves` exception.

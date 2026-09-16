@@ -25,17 +25,27 @@ import static legend.game.modding.coremod.CoreMod.INPUT_ACTION_MENU_UP;
 public class MessageBoxScreen extends MenuScreen {
   private final MessageBox20 messageBox = new MessageBox20();
   private final Consumer<MessageBoxResult> onResult;
+  private final boolean animateTransitions;
   private MessageBoxResult result;
   /** Allows list wrapping, but only on new input */
   private boolean allowWrapY = true;
 
   public MessageBoxScreen(final String text, final MessageBoxType type, final Consumer<MessageBoxResult> onResult) {
-    this(text, new I18nText("lod_core.ui.message_box.yes"), new I18nText("lod_core.ui.message_box.no"), type, onResult);
+    this(text, new I18nText("lod_core.ui.message_box.yes"), new I18nText("lod_core.ui.message_box.no"), type, true, onResult);
+  }
+
+  public MessageBoxScreen(final String text, final MessageBoxType type, final boolean animateTransitions, final Consumer<MessageBoxResult> onResult) {
+    this(text, new I18nText("lod_core.ui.message_box.yes"), new I18nText("lod_core.ui.message_box.no"), type, animateTransitions, onResult);
   }
 
   public MessageBoxScreen(final String text, final TextComponent yes, final TextComponent no, final MessageBoxType type, final Consumer<MessageBoxResult> onResult) {
+    this(text, yes, no, type, true, onResult);
+  }
+
+  private MessageBoxScreen(final String text, final TextComponent yes, final TextComponent no, final MessageBoxType type, final boolean animateTransitions, final Consumer<MessageBoxResult> onResult) {
     setMessageBoxText(this.messageBox, text, type);
     setMessageBoxOptions(this.messageBox, yes, no);
+    this.animateTransitions = animateTransitions;
     this.onResult = onResult;
   }
 
@@ -48,6 +58,23 @@ public class MessageBoxScreen extends MenuScreen {
   @Override
   protected void render() {
     messageBox(this.messageBox);
+
+    if(!this.animateTransitions) {
+      if(this.messageBox.state_0c == 2) {
+        // Skip the eight-frame PS1 box-opening animation. The quit prompt is
+        // still fully drawn, but it is ready for input on the first frame.
+        this.messageBox.backgroundRenderable_08.glyph_04 = 142;
+        this.messageBox.backgroundRenderable_08.startGlyph_10 = 142;
+        this.messageBox.backgroundRenderable_08.endGlyph_14 = 142;
+        this.messageBox.backgroundRenderable_08.flags_00 |= legend.game.types.Renderable58.FLAG_NO_ANIMATION;
+        this.messageBox.state_0c = 3;
+      } else if(this.messageBox.state_0c == 5) {
+        // The close animation has already released the prompt controls. Remove
+        // its temporary renderable immediately instead of showing it frame by frame.
+        legend.game.Menus.unloadRenderable(this.messageBox.backgroundRenderable_08);
+        this.messageBox.state_0c = 0;
+      }
+    }
 
     if(this.messageBox.state_0c == 0) {
       menuStack.popScreen();

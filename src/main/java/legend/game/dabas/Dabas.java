@@ -19,7 +19,7 @@ import org.legendofdragoon.dabas.core.InputType;
 import org.legendofdragoon.dabas.core.memory.types.IntRef;
 import org.legendofdragoon.dabas.game.DabasInterface;
 import org.legendofdragoon.dabas.game.types.Save60;
-import org.lwjgl.BufferUtils;
+import legend.core.DirectBuffers;
 
 import java.nio.ByteBuffer;
 
@@ -38,14 +38,14 @@ import static legend.lodmod.LodMod.INPUT_ACTION_GENERAL_MOVE_UP;
 import static legend.lodmod.LodMod.INPUT_ACTION_SMAP_INTERACT;
 import static org.legendofdragoon.dabas.core.sound.Spu.SAMPLES_PER_TICK;
 import static org.legendofdragoon.dabas.core.sound.Spu.SAMPLE_RATE;
-import static org.lwjgl.openal.AL10.AL_FORMAT_MONO8;
+import static legend.core.audio.AudioFormat.MONO_8;
 
 public class Dabas implements DabasInterface {
   private final int[] pixels = new int[32];
-  private final ByteBuffer pixelBuffer = BufferUtils.createByteBuffer(32 * 32 * 4);
+  private final ByteBuffer pixelBuffer = DirectBuffers.bytes(32 * 32 * 4);
   private final Hardware dabas = new Hardware(this, this.pixels);
 
-  private final ByteBuffer audioBuffer = BufferUtils.createByteBuffer(SAMPLES_PER_TICK);
+  private final ByteBuffer audioBuffer = DirectBuffers.bytes(SAMPLES_PER_TICK);
   private final GenericSource source;
 
   private Runnable oldRenderer;
@@ -65,7 +65,7 @@ public class Dabas implements DabasInterface {
   private Runnable onClosed;
 
   public Dabas() {
-    this.source = AUDIO_THREAD.addSource(new GenericSource(AL_FORMAT_MONO8, SAMPLE_RATE));
+    this.source = AUDIO_THREAD.addSource(new GenericSource(MONO_8, SAMPLE_RATE));
 
     this.dabas.start(Loader.resolve("OHTA/MCX/DABAS.BIN"));
   }

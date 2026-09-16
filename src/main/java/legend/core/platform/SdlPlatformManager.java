@@ -1,5 +1,7 @@
 package legend.core.platform;
 
+import javafx.application.Application;
+import javafx.application.Platform;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -28,8 +30,13 @@ import legend.core.platform.input.InputKey;
 import legend.core.platform.input.KeyInputActivation;
 import legend.core.platform.input.ScancodeInputActivation;
 import legend.core.platform.input.SdlGamepadDevice;
+import legend.core.renderer.TextureBuilder;
+import legend.core.renderer.opengl.StbTexturePngDecoder;
+import legend.game.textures.PngWriter;
+import legend.game.textures.desktop.StbPngEncoder;
 import legend.game.modding.events.input.InputPressedEvent;
 import legend.game.modding.events.input.InputReleasedEvent;
+import legend.game.debugger.Debugger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
@@ -141,6 +148,11 @@ public class SdlPlatformManager extends PlatformManager {
   private float rumbleSmallEndingIntensity;
   private long rumbleLerpStart;
   private long rumbleLerpDuration;
+
+  public SdlPlatformManager() {
+    TextureBuilder.setPngDecoder(new StbTexturePngDecoder());
+    PngWriter.setEncoder(new StbPngEncoder());
+  }
 
   @Override
   public void init() {
@@ -877,6 +889,25 @@ public class SdlPlatformManager extends PlatformManager {
 
   private void logLastError() {
     LOGGER.error(SDL_GetError());
+  }
+
+  @Override
+  public void requestExit() {
+    Platform.exit();
+  }
+
+  @Override
+  public void openDebugger() {
+    if(!Debugger.isRunning()) {
+      try {
+        Platform.setImplicitExit(false);
+        new Thread(() -> Application.launch(Debugger.class)).start();
+      } catch(final Exception e) {
+        LOGGER.info("Failed to start debugger", e);
+      }
+    } else {
+      Platform.runLater(Debugger::show);
+    }
   }
 
   private static final class AxisInputState {

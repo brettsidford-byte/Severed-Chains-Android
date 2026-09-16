@@ -1,6 +1,6 @@
 package legend.game.wmap;
 
-import de.jcm.discordgamesdk.activity.Activity;
+import discord.RichPresenceActivity;
 import legend.core.MathHelper;
 import legend.core.gpu.Bpp;
 import legend.core.gpu.Rect4i;
@@ -6233,7 +6233,7 @@ public class WMap extends EngineState<WMap> {
   }
 
   @Override
-  public void updateDiscordRichPresence(final GameState52c gameState, final Activity activity) {
+  public void updateDiscordRichPresence(final GameState52c gameState, final RichPresenceActivity activity) {
     super.updateDiscordRichPresence(gameState, activity);
     activity.setState("Exploring");
   }

@@ -1,8 +1,52 @@
+# Severed Chains Android
+
+This repository is an Android port of
+[Legend-of-Dragoon-Modding/Severed-Chains](https://github.com/Legend-of-Dragoon-Modding/Severed-Chains).
+It retains the upstream engine and history while adding an Android lifecycle,
+OpenGL ES renderer, Android audio and storage backends, physical-controller
+input, and an ARM64 APK build.
+
+The `android-port` branch is the product branch for this fork. It has diverged
+substantially at the platform layer and should not be confused with an official
+mobile release from the upstream Severed Chains project.
+
+## Current Android status
+
+The game is playable on the Anbernic RG405V test target, including:
+
+- disc import and extraction;
+- pre-rendered scenes, 3D models, lighting, mist, battles, and FMV playback;
+- Android audio and physical gamepad input;
+- in-game controller rebinding, save, and load;
+- Android splash, launcher icon, and task-aware quit behaviour.
+
+The present build targets 64-bit ARM devices, Android 8.0 (API 26) or newer,
+and an OpenGL ES 3.2-capable GPU. The RG405V is the validated device; other
+Android hardware should be treated as untested.
+
+The repository does not contain disc images. You must provide your own four
+Legend of Dragoon disc images when the app first starts. See
+[the Android build and installation guide](android/README.md) for details.
+
+## Repository relationship
+
+The upstream project remains the authoritative desktop PC/Mac/Linux/Steam Deck
+implementation. Shared engine changes are kept renderer- and platform-neutral
+where practical, while Android-specific code lives under `android/` and in the
+Android platform/backend classes. Report Android-port defects in this fork,
+not in the upstream issue tracker, unless the same defect is reproducible in an
+official upstream desktop build.
+
+## Upstream Severed Chains information
+
+The remainder of this document is retained from the upstream project for
+attribution and desktop-development context.
+
 Like what you see? Send me a tip! You can also subscribe to our [YouTube channel](https://www.youtube.com/@legend-of-dragoon). We do devstreams most Wednesdays at 8:00PM Atlantic Time.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/W7W4HFVW9)
 
-# Severed Chains
+# Upstream Severed Chains
 
 A project to reverse engineer Legend of Dragoon into a high-level language with a modding API. This is not an emulator, but assembly code disassembled and rewritten in Java.
 

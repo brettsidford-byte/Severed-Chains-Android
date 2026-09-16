@@ -1,6 +1,7 @@
 package legend.core.spu;
 
 import legend.core.audio.GenericSource;
+import legend.core.audio.AudioFormat;
 import legend.game.modding.coremod.CoreMod;
 import legend.game.sound.ReverbConfig;
 import org.apache.logging.log4j.LogManager;
@@ -11,7 +12,6 @@ import org.apache.logging.log4j.MarkerManager;
 import static legend.core.GameEngine.AUDIO_THREAD;
 import static legend.core.GameEngine.CONFIG;
 import static legend.core.audio.Constants.BASE_SAMPLE_RATE;
-import static org.lwjgl.openal.AL10.AL_FORMAT_STEREO16;
 
 public class Spu {
   private static final Logger LOGGER = LogManager.getFormatterLogger(Spu.class);
@@ -69,7 +69,7 @@ public class Spu {
 
   public void init() {
     synchronized(this) {
-      this.source = AUDIO_THREAD.addSource(new GenericSource(AL_FORMAT_STEREO16, BASE_SAMPLE_RATE));
+      this.source = AUDIO_THREAD.addSource(new GenericSource(AudioFormat.STEREO_16, BASE_SAMPLE_RATE));
       this.playerVolume = CONFIG.getConfig(CoreMod.SFX_VOLUME_CONFIG.get()) * CONFIG.getConfig(CoreMod.MASTER_VOLUME_CONFIG.get());
     }
   }

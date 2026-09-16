@@ -63,7 +63,13 @@ import static legend.game.modding.coremod.CoreMod.INPUT_ACTION_MENU_UP;
 import static legend.game.sound.Audio.playMenuSound;
 
 public class MainMenuScreen extends MenuScreen {
+  private static final int RETURNING_FROM_CHILD = 10;
+  private static final int RETURN_FADE_FRAMES = 5;
+  private static final int DEFAULT_EXIT_FADE_FRAMES = 10;
+  private static final int QUIT_EXIT_FADE_FRAMES = 5;
+
   private int loadingStage;
+  private int exitFadeFrames = DEFAULT_EXIT_FADE_FRAMES;
   private final Runnable unload;
 
   private final CharacterCard[] charCards = new CharacterCard[3];
@@ -103,9 +109,9 @@ public class MainMenuScreen extends MenuScreen {
     this.addButton(new I18nText("lod_core.ui.ingame_menu.goods"), this::showGoodsScreen);
     this.addButton(new I18nText("lod_core.ui.ingame_menu.mogul_dabas"), this::showDabasScreen);
     this.addButton(RawText.BLANK, () -> { }).hide();
-    this.addButton(new I18nText("lod_core.ui.ingame_menu.quit"), () -> menuStack.pushScreen(new MessageBoxScreen(I18n.translate("lod_core.ui.ingame_menu.quit_confirm"), MessageBoxType.CONFIRMATION, result -> {
+    this.addButton(new I18nText("lod_core.ui.ingame_menu.quit"), () -> menuStack.pushScreen(new MessageBoxScreen(I18n.translate("lod_core.ui.ingame_menu.quit_confirm"), MessageBoxType.CONFIRMATION, false, result -> {
       if(result == MessageBoxResult.YES) {
-        this.menuEscape();
+        this.menuEscape(QUIT_EXIT_FADE_FRAMES);
         whichMenu_800bdc38 = WhichMenu.QUIT;
       }
     })));
@@ -396,17 +402,8 @@ public class MainMenuScreen extends MenuScreen {
   protected void render() {
     switch(this.loadingStage) {
       case 0 -> {
-        cacheCharacterSlots();
+        this.refreshCharacterCards();
         startFadeEffect(2, 10);
-
-        for(int i = 0; i < this.charCards.length; i++) {
-          if(this.charScroll + i < gameState_800babc8.charIds_88.size()) {
-            this.charCards[i].setCharacter(gameState_800babc8.getCharacterBySlot(this.charScroll + i));
-          } else {
-            this.charCards[i].setCharacter(null);
-          }
-        }
-
         this.loadingStage++;
       }
 
@@ -419,10 +416,21 @@ public class MainMenuScreen extends MenuScreen {
 
       case 2 -> this.renderInventoryMenu(0);
 
+      // Child screens deallocate the shared retail UI renderables. Rebuild the
+      // main menu in one frame before starting its shorter return fade instead
+      // of replaying the two-stage initial-load sequence.
+      case RETURNING_FROM_CHILD -> {
+        this.refreshCharacterCards();
+        deallocateRenderables(0xff);
+        this.renderInventoryMenu(0xff);
+        startFadeEffect(2, RETURN_FADE_FRAMES);
+        this.loadingStage = 2;
+      }
+
       // Fade out
       case 100 -> {
         this.renderInventoryMenu(0);
-        startFadeEffect(1, 10);
+        startFadeEffect(1, this.exitFadeFrames);
         this.loadingStage++;
       }
 
@@ -433,6 +441,18 @@ public class MainMenuScreen extends MenuScreen {
         if(fullScreenEffect_800bb140.currentColour_28 >= 0xff) {
           this.unload.run();
         }
+      }
+    }
+  }
+
+  private void refreshCharacterCards() {
+    cacheCharacterSlots();
+
+    for(int i = 0; i < this.charCards.length; i++) {
+      if(this.charScroll + i < gameState_800babc8.charIds_88.size()) {
+        this.charCards[i].setCharacter(gameState_800babc8.getCharacterBySlot(this.charScroll + i));
+      } else {
+        this.charCards[i].setCharacter(null);
       }
     }
   }
@@ -484,7 +504,12 @@ public class MainMenuScreen extends MenuScreen {
   }
 
   private void menuEscape() {
+    this.menuEscape(DEFAULT_EXIT_FADE_FRAMES);
+  }
+
+  private void menuEscape(final int fadeFrames) {
     playMenuSound(3);
+    this.exitFadeFrames = fadeFrames;
     this.loadingStage = 100;
   }
 
@@ -537,8 +562,7 @@ public class MainMenuScreen extends MenuScreen {
     return menuStack.pushScreen(new OptionsCategoryScreen(CONFIG, EnumSet.allOf(ConfigStorageLocation.class), () -> {
       ConfigStorage.saveConfig(CONFIG, ConfigStorageLocation.GLOBAL, Path.of("config.dcnf"));
       ConfigStorage.saveConfig(CONFIG, ConfigStorageLocation.CAMPAIGN, gameState_800babc8.campaign.path.resolve("campaign_config.dcnf"));
-      menuStack.popScreen();
-      this.loadingStage = 0;
+      this.resumeFromChild();
 
       this.saveButton.setDisabled(!currentEngineState_8004dd04.canSave());
     }));
@@ -554,19 +578,16 @@ public class MainMenuScreen extends MenuScreen {
       SAVES.loadGameState(save, false);
       currentEngineState_8004dd04.loadSaveFromMenu(save);
     }, () -> {
-      startFadeEffect(2, 5);
-      menuStack.popScreen();
       this.fadeOutArrows();
-      this.loadingStage = 0;
+      this.resumeFromChild();
     }, gameState_800babc8.campaign));
   }
 
   private void showSaveScreen() {
     if(currentEngineState_8004dd04.canSave()) {
       menuStack.pushScreen(new SaveGameScreen(() -> {
-        menuStack.popScreen();
         this.fadeOutArrows();
-        this.loadingStage = 0;
+        this.resumeFromChild();
         this.loadButton.setDisabled(gameState_800babc8.campaign.loadAllSaves().isEmpty());
       }));
     } else {
@@ -591,10 +612,12 @@ public class MainMenuScreen extends MenuScreen {
   }
 
   private <T extends MenuScreen> T showScreen(final Function<Runnable, T> screen) {
-    return menuStack.pushScreen(screen.apply(() -> {
-      menuStack.popScreen();
-      this.loadingStage = 0;
-    }));
+    return menuStack.pushScreen(screen.apply(this::resumeFromChild));
+  }
+
+  private void resumeFromChild() {
+    menuStack.popScreen();
+    this.loadingStage = RETURNING_FROM_CHILD;
   }
 
   @Override

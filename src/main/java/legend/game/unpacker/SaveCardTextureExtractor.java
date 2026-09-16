@@ -6,7 +6,7 @@ import legend.core.gpu.VramTextureSingle;
 import legend.game.textures.PngWriter;
 import legend.game.tim.Tim;
 import legend.lodmod.LodGoods;
-import org.lwjgl.BufferUtils;
+import legend.core.DirectBuffers;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -85,7 +85,7 @@ public final class SaveCardTextureExtractor {
   }
 
   private static FileData createPng(final int[] uncompressed, final Rect4i region, final int stride) {
-    final ByteBuffer buffer = BufferUtils.createByteBuffer(region.w * region.h * 4);
+    final ByteBuffer buffer = DirectBuffers.bytes(region.w * region.h * 4);
     final IntBuffer ints = buffer.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
 
     for(int y = 0; y < region.h; y++) {

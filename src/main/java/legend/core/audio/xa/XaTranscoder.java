@@ -1,11 +1,12 @@
 package legend.core.audio.xa;
 
 import legend.core.audio.opus.OpusFile;
+import legend.core.audio.opus.OpusEncoder;
+import legend.core.audio.opus.OpusEncoders;
+import legend.core.DirectBuffers;
 import legend.game.unpacker.FileData;
 import legend.game.unpacker.PathNode;
 import legend.game.unpacker.Transformations;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.util.opus.Opus;
 
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
@@ -28,7 +29,7 @@ public class XaTranscoder {
       };
     }
   }
-  private final long encoder;
+  private final OpusEncoder encoder;
   private final short[] old = {0, 0};
   private final short[] older = {0, 0};
   private static final short[] EMPTY = {0, 0, 0};
@@ -43,20 +44,17 @@ public class XaTranscoder {
   private final ShortBuffer opusInputBuffer;
   private int opusInputBufferPosition;
   private static final int OPUS_OUTPUT_BUFFER_SIZE = 500;
-  private final ByteBuffer opusOutputBuffer;
   private OpusFile opusFile;
   private final int channels;
 
   private XaTranscoder(final int channels) {
     this.channels = channels;
-    this.encoder = Opus.opus_encoder_create(48_000, channels, Opus.OPUS_APPLICATION_AUDIO, null);
-    Opus.opus_encoder_ctl(this.encoder, Opus.OPUS_SET_BITRATE(128_000));
+    this.encoder = OpusEncoders.create(channels);
 
     this.sourceBuffer[0] = new short[XA_ADPCM_BLOCK_SIZE * (3 - this.channels) + EMPTY.length];
     this.sourceBuffer[1] = new short[(XA_ADPCM_BLOCK_SIZE + EMPTY.length) * (this.channels - 1)];
 
-    this.opusInputBuffer = BufferUtils.createShortBuffer(OPUS_FRAME_SIZE * channels);
-    this.opusOutputBuffer = BufferUtils.createByteBuffer(OPUS_OUTPUT_BUFFER_SIZE * this.channels);
+    this.opusInputBuffer = DirectBuffers.shorts(OPUS_FRAME_SIZE * channels);
   }
 
   public static void transform(final PathNode node, final Transformations transformations) {
@@ -102,11 +100,11 @@ public class XaTranscoder {
       transformations.addNode(node.fullPath + '/' + track + ".opus", new FileData(this.opusFile.toBytes()));
     }
 
-    Opus.opus_encoder_destroy(this.encoder);
+    this.encoder.destroy();
   }
 
   private void reset() {
-    Opus.opus_encoder_ctl(this.encoder, Opus.OPUS_RESET_STATE);
+    this.encoder.reset();
     this.old[0] = 0;
     this.old[1] = 0;
     this.older[0] = 0;
@@ -115,10 +113,6 @@ public class XaTranscoder {
     this.opusInputBuffer.clear();
     this.opusInputBuffer.put(0, new short[PRE_SKIP]);
     this.opusInputBuffer.clear();
-
-    this.opusOutputBuffer.clear();
-    this.opusOutputBuffer.put(0, new byte[OPUS_OUTPUT_BUFFER_SIZE * this.channels]);
-    this.opusOutputBuffer.clear();
 
     this.interpolationCounter = 160;
     for(int channel = 0; channel < this.channels; channel++) {
@@ -197,12 +191,7 @@ public class XaTranscoder {
   }
 
   private void encodeOpusData() {
-    this.opusOutputBuffer.clear();
-    final int encoded = Opus.opus_encode(this.encoder, this.opusInputBuffer, OPUS_FRAME_SIZE, this.opusOutputBuffer);
-
-    final byte[] bytes = new byte[encoded];
-    this.opusOutputBuffer.get(bytes, 0, encoded);
-    this.opusFile.addOpusSegment(bytes);
+    this.opusFile.addOpusSegment(this.encoder.encode(this.opusInputBuffer, OPUS_FRAME_SIZE));
 
     this.opusInputBuffer.clear();
     this.opusInputBufferPosition = 0;

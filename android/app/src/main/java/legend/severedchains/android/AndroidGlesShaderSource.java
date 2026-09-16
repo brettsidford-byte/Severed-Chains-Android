@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-/** Loads upstream shader files and applies the narrowly-scoped desktop-to-GLES changes. */
+/** Loads build-time-precompiled GLSL ES shaders from the APK asset tree. */
 public final class AndroidGlesShaderSource {
     private AndroidGlesShaderSource() {
     }
@@ -36,23 +36,24 @@ public final class AndroidGlesShaderSource {
         final String glesSource = normalised.replaceFirst(
             "(?m)^#version\\s+330\\s+core\\s*$", version);
         final String typedSource = glesSource
-            .replace("projectionMode == 1", "projectionMode == 1.0")
-            .replace("projectionMode == 2", "projectionMode == 2.0")
-            .replace("discardTranslucency == 1", "discardTranslucency == 1.0")
-            .replace("discardTranslucency == 2", "discardTranslucency == 2.0")
-            .replace("alpha != -1", "alpha != -1.0")
-            .replace("useTextureAlpha != 0", "useTextureAlpha != 0.0")
-            .replace("useTextureAlpha == 0", "useTextureAlpha == 0.0");
+            .replaceAll("projectionMode == 1(?![.\\d])", "projectionMode == 1.0")
+            .replaceAll("projectionMode == 2(?![.\\d])", "projectionMode == 2.0")
+            .replaceAll("discardTranslucency == 1(?![.\\d])", "discardTranslucency == 1.0")
+            .replaceAll("discardTranslucency == 2(?![.\\d])", "discardTranslucency == 2.0")
+            .replaceAll("alpha != -1(?![.\\d])", "alpha != -1.0")
+            .replaceAll("useTextureAlpha != 0(?![.\\d])", "useTextureAlpha != 0.0")
+            .replaceAll("useTextureAlpha == 0(?![.\\d])", "useTextureAlpha == 0.0");
         if (typedSource.startsWith(version)) {
-            String result = typedSource;
-            if (!result.contains("precision mediump float")) {
+            String result = typedSource.replaceAll(
+                "(?m)^precision\\s+(?:lowp|mediump|highp)\\s+int;\\s*", "");
+            result = result.replaceAll(
+                "(?m)^precision\\s+(?:lowp|mediump|highp)\\s+float;\\s*", "");
+            if (!result.contains("precision highp float")) {
                 result = result.replaceFirst("(#version " + glesVersion + " es\\s*)",
-                    "$1precision mediump float;\n");
+                    "$1precision highp float;\n");
             }
-            if (!result.contains("precision mediump int")) {
-                result = result.replaceFirst("(#version " + glesVersion + " es\\s*)",
-                    "$1precision mediump int;\n");
-            }
+            result = result.replaceFirst("(#version " + glesVersion + " es\\s*)",
+                "$1precision highp int;\n");
             return result;
         }
         return typedSource;

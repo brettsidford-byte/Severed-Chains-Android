@@ -61,3 +61,11 @@ gradle-app.setting
 /android-sdk/
 /android/build/
 /android/app/build/
+/android/keystore/
+/work/
+/Documents/
+*.apk
+*.idsig
+!/android/engine/libs/script-recompiler-0.7.11-java17.jar
+!/android/engine/libs/mogul-dabas-0.0.1-java17.jar
+!/android/engine/libs/mod-loader-4.3.3-android.jar

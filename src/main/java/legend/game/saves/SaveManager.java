@@ -3,6 +3,7 @@ package legend.game.saves;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import legend.core.GameEngine;
+import legend.core.GamePaths;
 import legend.core.IoHelper;
 import legend.core.Latch;
 import legend.core.memory.types.IntRef;
@@ -27,7 +28,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
@@ -76,7 +76,7 @@ public final class SaveManager {
     "BESCESP03047drgn", // SP
   };
 
-  private final Path dir = Paths.get("saves");
+  private final Path dir = GamePaths.saves();
   public static final PathMatcher SAVE_MATCHER = FileSystems.getDefault().getPathMatcher("glob:*.dsav");
 
   private final SaveVersion serializerVersion;

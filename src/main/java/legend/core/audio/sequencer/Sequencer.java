@@ -1,6 +1,7 @@
 package legend.core.audio.sequencer;
 
 import legend.core.audio.AudioSource;
+import legend.core.audio.AudioFormat;
 import legend.core.audio.EffectsOverTimeGranularity;
 import legend.core.audio.InterpolationPrecision;
 import legend.core.audio.PitchResolution;
@@ -35,7 +36,6 @@ public final class Sequencer extends AudioSource {
   private static final Logger LOGGER = LogManager.getFormatterLogger(Sequencer.class);
   private static final Marker SEQUENCER_MARKER = MarkerManager.getMarker("SEQUENCER");
 
-  private static final int AL_FORMAT_STEREO32 = 0x10011;
   // TODO switch between mono and stereo
   private final boolean stereo;
   private EffectsOverTimeGranularity effectsOverTimeGranularity;
@@ -133,7 +133,7 @@ public final class Sequencer extends AudioSource {
       }
     }
 
-    this.bufferOutput(AL_FORMAT_STEREO32, this.outputBuffer, ENGINE_SAMPLE_RATE);
+    this.bufferOutput(AudioFormat.STEREO_FLOAT, this.outputBuffer, ENGINE_SAMPLE_RATE);
 
     super.tick();
   }

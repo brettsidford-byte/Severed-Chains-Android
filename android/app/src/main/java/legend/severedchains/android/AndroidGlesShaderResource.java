@@ -19,7 +19,7 @@ import legend.core.renderer.ShaderUniformVec2;
 import legend.core.renderer.ShaderUniformVec3;
 import legend.core.renderer.ShaderUniformVec4;
 
-/** Android GLES shader-program resource used by the future RenderApi adapter. */
+/** Shader-program resource used by Android's upstream RenderApi implementation. */
 public final class AndroidGlesShaderResource<Options extends ShaderOptions>
     implements Shader<Options> {
     private final AssetManager assets;
@@ -55,7 +55,11 @@ public final class AndroidGlesShaderResource<Options extends ShaderOptions>
         final AssetManager assets, final String vertexPath, final String fragmentPath,
         final Function<Shader<Options>, Supplier<Options>> optionsFactory) throws IOException {
         final int program = createProgram(assets, vertexPath, null, fragmentPath);
-        return program == 0 ? null : new AndroidGlesShaderResource<>(assets, vertexPath, null,
+        if (program == 0) {
+            throw new IOException("Failed to create GLES shader program " + vertexPath
+                + " / " + fragmentPath);
+        }
+        return new AndroidGlesShaderResource<>(assets, vertexPath, null,
             fragmentPath, optionsFactory, program);
     }
 
@@ -64,7 +68,11 @@ public final class AndroidGlesShaderResource<Options extends ShaderOptions>
         final String fragmentPath,
         final Function<Shader<Options>, Supplier<Options>> optionsFactory) throws IOException {
         final int program = createProgram(assets, vertexPath, geometryPath, fragmentPath);
-        return program == 0 ? null : new AndroidGlesShaderResource<>(assets, vertexPath,
+        if (program == 0) {
+            throw new IOException("Failed to create GLES shader program " + vertexPath
+                + " / " + geometryPath + " / " + fragmentPath);
+        }
+        return new AndroidGlesShaderResource<>(assets, vertexPath,
             geometryPath, fragmentPath, optionsFactory, program);
     }
 

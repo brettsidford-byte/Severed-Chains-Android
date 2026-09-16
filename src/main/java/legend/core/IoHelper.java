@@ -21,9 +21,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
-import static org.lwjgl.BufferUtils.createByteBuffer;
-import static org.lwjgl.system.MemoryUtil.memSlice;
-
 public final class IoHelper {
   private IoHelper() { }
 
@@ -42,15 +39,16 @@ public final class IoHelper {
    */
   public static ByteBuffer pathToByteBuffer(final Path path) throws IOException {
     final ByteBuffer buffer;
+    final Path resolvedPath = GamePaths.resolve(path);
 
-    try(final SeekableByteChannel fc = Files.newByteChannel(path)) {
-      buffer = createByteBuffer((int)fc.size() + 1);
-      while(fc.read(buffer) != -1) {
+    try(final SeekableByteChannel fc = Files.newByteChannel(resolvedPath)) {
+      buffer = DirectBuffers.bytes(Math.toIntExact(fc.size()));
+      while(buffer.hasRemaining() && fc.read(buffer) != -1) {
       }
     }
 
     buffer.flip();
-    return memSlice(buffer);
+    return buffer.slice().order(ByteOrder.nativeOrder());
   }
 
   public static String slugName(final String name) {

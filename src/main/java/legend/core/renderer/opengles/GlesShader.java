@@ -2,7 +2,6 @@ package legend.core.renderer.opengles;
 
 import legend.core.memory.types.IntRef;
 import legend.core.renderer.Shader;
-import legend.core.renderer.ShaderManager;
 import legend.core.renderer.ShaderOptions;
 import legend.core.renderer.ShaderStage;
 import legend.core.renderer.ShaderUniformFloat;
@@ -147,7 +146,7 @@ public class GlesShader<Options extends ShaderOptions> implements Shader<Options
   }
 
   private int compileShader(final Path file, final ShaderStage stage, final IntRef uniformIndex) throws IOException {
-    final String transpiled = ShaderManager.transpileShader(Files.readString(file), stage, uniformIndex);
+    final String transpiled = ShaderTranspiler.transpile(Files.readString(file), stage, uniformIndex);
 
     final int type = switch(stage) {
       case VERTEX -> GL_VERTEX_SHADER;

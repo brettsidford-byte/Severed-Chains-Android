@@ -12,6 +12,7 @@ import legend.core.gpu.Gpu;
 import legend.core.gte.Gte;
 import legend.core.gte.MV;
 import legend.core.lang.I18nText;
+import legend.core.lang.RawText;
 import legend.core.platform.PlatformManager;
 import legend.core.platform.PlatformManagerFactory;
 import legend.core.platform.WindowEvents;
@@ -20,10 +21,13 @@ import legend.core.renderer.Obj;
 import legend.core.renderer.QuadBuilder;
 import legend.core.renderer.QueuedModelStandard;
 import legend.core.renderer.RenderEngine;
+import legend.core.renderer.RendererResourceFactory;
 import legend.core.renderer.Texture;
+import legend.core.renderer.TextureDataFormat;
+import legend.core.renderer.TextureDataType;
+import legend.core.renderer.TextureInternalFormat;
 import legend.core.renderer.Translucency;
 import legend.core.spu.Spu;
-import legend.game.Main;
 import legend.game.Scus94491BpeSegment;
 import legend.game.fmv.Fmv;
 import legend.game.fmv.VideoPlayer;
@@ -33,6 +37,8 @@ import legend.game.inventory.screens.FontOptions;
 import legend.game.inventory.screens.TextColour;
 import legend.game.modding.coremod.CoreEngineStateTypes;
 import legend.game.modding.coremod.CoreMod;
+import legend.lodmod.LodMod;
+import legend.turnorder.TurnOrderMod;
 import legend.game.saves.ConfigCollection;
 import legend.game.saves.ConfigStorage;
 import legend.game.saves.ConfigStorageLocation;
@@ -60,6 +66,7 @@ import org.legendofdragoon.modloader.i18n.LangManager;
 import org.legendofdragoon.modloader.registries.RegistryId;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -80,6 +87,7 @@ import static legend.game.Text.textZ_800bdf00;
 import static legend.game.sound.Audio.startSound;
 
 public final class GameEngine {
+  public static final java.util.Locale ORIGINAL_LOCALE = java.util.Locale.getDefault();
   private GameEngine() { }
 
   private static final Logger LOGGER = LogManager.getFormatterLogger(GameEngine.class);
@@ -103,6 +111,30 @@ public final class GameEngine {
 
   public static final PlatformManager PLATFORM = PlatformManagerFactory.create();
   public static final RenderEngine RENDERER = new RenderEngine();
+
+  static {
+    RendererResourceFactory.setFactory(new RendererResourceFactory.Factory() {
+      @Override
+      public Texture makeTexture(final Buffer buffer, final String name, final int width,
+                                 final int height, final TextureInternalFormat internalFormat,
+                                 final TextureDataFormat dataFormat,
+                                 final TextureDataType dataType, final boolean minFilter,
+                                 final boolean magFilter, final boolean wrapS,
+                                 final boolean wrapT) {
+        return RENDERER.api().makeTexture(buffer, name, width, height, internalFormat,
+          dataFormat, dataType, minFilter, magFilter, wrapS, wrapT);
+      }
+
+      @Override
+      public legend.core.renderer.FrameBuffer makeFrameBuffer(
+          final String name,
+          final legend.core.renderer.FrameBufferAttachment[] attachments) {
+        return RENDERER.api().makeFrameBuffer(name, attachments);
+      }
+    });
+    RendererResourceFactory.setNotificationSink(message ->
+      GameOverlay.addNotification(5, new RawText(message)));
+  }
 
   public static final FontManager FONTS = new FontManager();
   public static Font DEFAULT_FONT = FONTS.get(GamePaths.gfx().resolve("fonts/default.json"));
@@ -180,14 +212,18 @@ public final class GameEngine {
   public static void start() throws IOException {
     UPDATE_CHECK_FINISHED = false;
     UPDATE = null;
-    UPDATER.check(release -> {
-      synchronized(UPDATER_LOCK) {
-        UPDATE_CHECK_FINISHED = true;
-        UPDATE = release;
-      }
-    });
+    if(PLATFORM.supportsUpdateChecks()) {
+      UPDATER.check(release -> {
+        synchronized(UPDATER_LOCK) {
+          UPDATE_CHECK_FINISHED = true;
+          UPDATE = release;
+        }
+      });
+    } else {
+      UPDATE_CHECK_FINISHED = true;
+    }
 
-    loadLangOverrides(Main.ORIGINAL_LOCALE);
+    loadLangOverrides(ORIGINAL_LOCALE);
 
     final Thread thread = new Thread(() -> {
       try {
@@ -240,7 +276,11 @@ public final class GameEngine {
     thread.start();
 
     // Find and load all mods so their global config can be shown in the title screen options menu
-    MOD_ACCESS.findMods(GamePaths.mods(), Version.VERSION);
+    if(PLATFORM.usesBundledModDiscovery()) {
+      findBundledMods();
+    } else {
+      MOD_ACCESS.findMods(GamePaths.mods(), Version.VERSION);
+    }
     bootMods(MODS.getAllModIds());
 
     ConfigStorage.loadConfig(CONFIG, ConfigStorageLocation.GLOBAL, GamePaths.configDcnf());
@@ -254,9 +294,9 @@ public final class GameEngine {
     AUDIO_THREAD.changeEffectsOverTimeGranularity(CONFIG.getConfig(CoreMod.MUSIC_EFFECTS_OVER_TIME_GRANULARITY_CONFIG.get()));
 
     SPU.init();
-    RENDERER.init();
+    PLATFORM.runOnRenderThread(RENDERER::init);
     RENDERER.events().onClose(Async::shutdown);
-    GPU.init();
+    PLATFORM.runOnRenderThread(GPU::init);
     DISCORD.init();
     openalThread.start();
 
@@ -267,7 +307,7 @@ public final class GameEngine {
     } finally {
       DISCORD.destroy();
       AUDIO_THREAD.destroy();
-      RENDERER.delete();
+      PLATFORM.runOnRenderThread(RENDERER::delete);
       UPDATER.delete();
       PLATFORM.destroy();
     }
@@ -301,6 +341,24 @@ public final class GameEngine {
     LANG_ACCESS.addLangOverrides(lang);
   }
 
+  private static void findBundledMods() {
+    try {
+      MOD_ACCESS.getClass().getMethod("findBundledMods", String.class, Class[].class)
+        .invoke(MOD_ACCESS, Version.VERSION, new Class<?>[] {CoreMod.class, LodMod.class, TurnOrderMod.class});
+    } catch(final ReflectiveOperationException e) {
+      throw new IllegalStateException("Android-compatible Mod Loader is unavailable", e);
+    }
+  }
+
+  private static void initializeBundledListeners() {
+    try {
+      EVENT_ACCESS.getClass().getMethod("initializeBundled", ModManager.class, Class[].class)
+        .invoke(EVENT_ACCESS, MODS, new Class<?>[] {CoreMod.class, LodMod.class, TurnOrderMod.class});
+    } catch(final ReflectiveOperationException e) {
+      throw new IllegalStateException("Android-compatible event discovery is unavailable", e);
+    }
+  }
+
   /** Returns missing mod IDs, if any */
   public static Set<String> bootMods(final Set<String> modIds) {
     LOGGER.info("Booting mods...");
@@ -314,7 +372,11 @@ public final class GameEngine {
     final Set<String> missingMods = MOD_ACCESS.loadMods(modIds);
 
     // Initialize event bus and find all event handlers
-    EVENT_ACCESS.initialize(MODS);
+    if(PLATFORM.usesBundledModDiscovery()) {
+      initializeBundledListeners();
+    } else {
+      EVENT_ACCESS.initialize(MODS);
+    }
 
     // Load mod registries
     EVENTS.postEvent(new AddRegistryEvent(REGISTRIES));

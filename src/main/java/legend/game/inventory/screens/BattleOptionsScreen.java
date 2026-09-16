@@ -11,12 +11,11 @@ public class BattleOptionsScreen extends OptionsScreen {
   private final Panel panel;
 
   public BattleOptionsScreen(final ConfigCollection config, final Set<ConfigStorageLocation> validLocations, final ConfigCategory category, final Runnable unload) {
+    super(config, validLocations, category, unload);
     final Panel panel = Panel.panel();
     panel.setPos(12, 20);
     panel.setSize(296, 140);
     this.panel = panel;
-
-    super(config, validLocations, category, unload);
 
     this.addControl(panel);
   }

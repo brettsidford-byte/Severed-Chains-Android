@@ -18,3 +18,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "SeveredChainsAndroid"
 include(":app")
+include(":engine")

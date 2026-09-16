@@ -30,8 +30,6 @@ import static legend.game.Scus94491BpeSegment_8005.submapCut_80052c30;
 import static legend.game.Scus94491BpeSegment_800b.gameState_800babc8;
 
 public final class Main {
-  public static final Locale ORIGINAL_LOCALE = Locale.getDefault();
-
   static {
     System.setProperty("log4j.skipJansi", "false");
     System.setProperty("log4j2.configurationFile", "log4j2.xml");

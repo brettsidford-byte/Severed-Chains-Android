@@ -4,12 +4,8 @@ import legend.core.renderer.Texture;
 import legend.core.renderer.TextureDataFormat;
 import legend.core.renderer.TextureDataType;
 import legend.core.renderer.TextureInternalFormat;
-import org.lwjgl.BufferUtils;
+import legend.core.DirectBuffers;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 
@@ -125,7 +121,7 @@ public class VramTextureSingle extends VramTexture {
   public Texture createOpenglTexture(final String name, final VramTextureSingle palette, final Rect4i region) {
     return Texture.create(name, builder -> {
       final int[] data = this.applyPalette(palette, region);
-      final IntBuffer buffer = BufferUtils.createIntBuffer(data.length);
+      final IntBuffer buffer = DirectBuffers.ints(data.length);
       buffer.put(0, data);
       builder.data(buffer, this.rect.w(), this.rect.h());
       builder.internalFormat(TextureInternalFormat.RGBA_8);
@@ -139,13 +135,13 @@ public class VramTextureSingle extends VramTexture {
   }
 
   public void dumpToFile() {
-    final BufferedImage image = new BufferedImage(this.rect.w(), this.rect.h(), BufferedImage.TYPE_INT_RGB);
-
-    image.setRGB(0, 0, this.rect.w(), this.rect.h(), this.data, 0, this.rect.w());
-
     try {
-      ImageIO.write(image, "png", new File("dump.png"));
-    } catch(final IOException e) {
+      final Class<?> writer = Class.forName("legend.core.gpu.desktop.VramDumpWriter");
+      writer.getMethod("write", int[].class, int.class, int.class)
+        .invoke(null, this.data, this.rect.w(), this.rect.h());
+    } catch(final ClassNotFoundException ignored) {
+      // Optional diagnostic export is unavailable on hosts without java.desktop.
+    } catch(final ReflectiveOperationException e) {
       throw new RuntimeException(e);
     }
   }

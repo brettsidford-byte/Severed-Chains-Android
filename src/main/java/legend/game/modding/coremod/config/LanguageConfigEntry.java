@@ -22,7 +22,7 @@ import java.util.Set;
 
 import static legend.core.GameEngine.LANG;
 import static legend.core.GameEngine.MODS;
-import static legend.game.Main.ORIGINAL_LOCALE;
+import static legend.core.GameEngine.ORIGINAL_LOCALE;
 
 public class LanguageConfigEntry extends ConfigEntry<Locale> {
   private static final Logger LOGGER = LogManager.getFormatterLogger(LanguageConfigEntry.class);
@@ -122,10 +122,10 @@ public class LanguageConfigEntry extends ConfigEntry<Locale> {
 
       if(bytes.length > offset.get() + 1) {
         final String country = data.readAscii(offset, 1);
-        return Locale.of(language, country);
+        return new Locale(language, country);
       }
 
-      return Locale.of(language);
+      return new Locale(language);
     }
 
     return getDefaultLocale();

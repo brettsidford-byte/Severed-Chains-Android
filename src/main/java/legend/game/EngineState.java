@@ -1,6 +1,6 @@
 package legend.game;
 
-import de.jcm.discordgamesdk.activity.Activity;
+import discord.RichPresenceActivity;
 import legend.core.platform.input.InputAction;
 import legend.core.tags.Tag;
 import legend.game.saves.SavedGame;
@@ -158,7 +158,7 @@ public abstract class EngineState<T extends EngineState<T>> {
     return false;
   }
 
-  public void updateDiscordRichPresence(final GameState52c gameState, final Activity activity) {
+  public void updateDiscordRichPresence(final GameState52c gameState, final RichPresenceActivity activity) {
     activity.setDetails(this.getChapter(gameState) + " - " + this.getLocation(gameState));
     activity.setState(null);
   }

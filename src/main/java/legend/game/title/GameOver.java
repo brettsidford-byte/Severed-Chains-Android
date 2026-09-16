@@ -1,6 +1,6 @@
 package legend.game.title;
 
-import de.jcm.discordgamesdk.activity.Activity;
+import discord.RichPresenceActivity;
 import legend.core.gpu.Rect4i;
 import legend.core.gte.MV;
 import legend.core.memory.Method;
@@ -150,7 +150,7 @@ public class GameOver extends EngineState<GameOver> {
   }
 
   @Override
-  public void updateDiscordRichPresence(final GameState52c gameState, final Activity activity) {
+  public void updateDiscordRichPresence(final GameState52c gameState, final RichPresenceActivity activity) {
     activity.setDetails("Game Over");
     activity.setState(null);
   }

@@ -57,8 +57,8 @@ public final class Finderator {
       .map(stringListEntry -> stringListEntry.getKey() + ": " + stringListEntry.getValue().size() + ' ' + stringListEntry.getValue() + '\n')
       .collect(Collectors.joining());
 
-    Files.writeString(Path.of("./models.txt"), models, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-    Files.writeString(Path.of("./animations.txt"), animations, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    Files.write(Path.of("./models.txt"), models.getBytes(java.nio.charset.StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    Files.write(Path.of("./animations.txt"), animations.getBytes(java.nio.charset.StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
   }
 
   private static String hashToString(final byte[] hash) {

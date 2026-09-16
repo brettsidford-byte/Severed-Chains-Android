@@ -1,6 +1,5 @@
 package legend.game;
 
-import javafx.application.Platform;
 import legend.core.Config;
 import legend.core.MathHelper;
 import legend.core.gpu.Rect4i;
@@ -207,7 +206,7 @@ public final class Scus94491BpeSegment {
     RENDERER.events().onClose(() -> {
       stopSound();
       AUDIO_THREAD.stop();
-      Platform.exit();
+      PLATFORM.requestExit();
     });
   }
 

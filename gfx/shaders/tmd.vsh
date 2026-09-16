@@ -8,26 +8,38 @@ layout(location = 4) in float inClut;
 layout(location = 5) in vec4 inColour;
 layout(location = 6) in float inFlags;
 
-out VS_OUT {
-  smooth vec2 vertUv;
-  flat vec2 vertTpage;
-  flat vec2 vertClut;
-  flat int vertBpp;
-  smooth vec4 vertColour;
-  flat int vertFlags;
+struct VS_OUT {
+  vec2 vertUv;
+  vec2 vertTpage;
+  vec2 vertClut;
+  int vertBpp;
+  vec4 vertColour;
+  int vertFlags;
 
-  flat int translucency;
+  int translucency;
 
-  flat float widthMultiplier;
-  flat int widthMask;
-  flat int indexShift;
-  flat int indexMask;
+  float widthMultiplier;
+  int widthMask;
+  int indexShift;
+  int indexMask;
 
-  smooth float viewspaceZ;
+  float viewspaceZ;
 
-  smooth float depth;
-  smooth float depthOffset;
-} vs_out;
+  float depth;
+  float depthOffset;
+};
+
+VS_OUT vs_out;
+
+// Keep the geometry-stage contract compact. Some Mali drivers corrupt late
+// members of mixed flat/smooth interface blocks and components of flat integer
+// vectors. The packed control words remain exactly representable by the target's
+// highp IEEE-754 floats.
+out vec2 tmdUv;
+flat out float tmdControlA;
+flat out float tmdControlB;
+out vec4 tmdColour;
+out vec3 tmdDepth;
 
 uniform vec2 clutOverride;
 uniform vec2 tpageOverride;
@@ -74,6 +86,13 @@ layout(std140) uniform projectionInfo {
 
 void main() {
   vec4 pos = vec4(inPos.xyz, 1.0f);
+
+  vs_out.vertTpage = vec2(0.0);
+  vs_out.vertClut = vec2(0.0);
+  vs_out.vertBpp = 0;
+  vs_out.translucency = 0;
+  vs_out.vertColour = vec4(1.0);
+  vs_out.depthOffset = 0.0;
 
   vs_out.vertFlags = int(inFlags);
   bool coloured = (vs_out.vertFlags & 0x4) != 0;
@@ -160,4 +179,15 @@ void main() {
   vs_out.vertUv = inUv;
 
   vs_out.depth = gl_Position.z;
+
+  tmdUv = vs_out.vertUv;
+  int material = vs_out.vertBpp | vs_out.translucency << 2;
+  int tpageX = int(vs_out.vertTpage.x) / 64;
+  int tpageY = int(vs_out.vertTpage.y) / 256;
+  int clutX = int(vs_out.vertClut.x) / 16;
+  int clutY = int(vs_out.vertClut.y);
+  tmdControlA = float((vs_out.vertFlags & 0xff) | material << 8 | tpageX << 12 | tpageY << 16);
+  tmdControlB = float(clutX | clutY << 6);
+  tmdColour = vs_out.vertColour;
+  tmdDepth = vec3(vs_out.viewspaceZ, vs_out.depth, vs_out.depthOffset);
 }

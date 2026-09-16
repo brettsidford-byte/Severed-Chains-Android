@@ -70,7 +70,7 @@ public class SaveGameScreen extends MenuScreen {
         return new I18nText("lod_core.ui.save_game.loading");
       }
 
-      return new RawText(savedGame.resultNow().saveName);
+      return new RawText(savedGame.join().saveName);
     }));
 
     this.saveList.setPos(16, 16);
@@ -80,7 +80,7 @@ public class SaveGameScreen extends MenuScreen {
       if(save == null) {
         this.onSelection(null);
       } else if(save.isDone()) {
-        this.onSelection(save.resultNow());
+        this.onSelection(save.join());
       } else {
         playMenuSound(40);
       }
@@ -105,7 +105,7 @@ public class SaveGameScreen extends MenuScreen {
       }
 
       if(save != null && save.isDone()) {
-        this.saveCard = this.addControl(save.resultNow().createSaveCard());
+        this.saveCard = this.addControl(save.join().createSaveCard());
         this.saveCard.alwaysReceiveInput();
       } else {
         this.saveCard = this.addControl(new BlankSaveCard());
@@ -199,9 +199,9 @@ public class SaveGameScreen extends MenuScreen {
       menuStack.pushScreen(new MessageBoxScreen(I18n.translate("lod_core.ui.save_game.delete_confirm"), MessageBoxType.CONFIRMATION, result -> {
         if(result == MessageBoxResult.YES) {
           try {
-            final SavedGame savedGame = this.saveList.getSelected().resultNow();
+            final SavedGame savedGame = this.saveList.getSelected().join();
             savedGame.campaign.deleteSave(savedGame.fileName);
-            this.saves.removeIf(save -> save.resultNow().fileName.equals(savedGame.fileName));
+            this.saves.removeIf(save -> save.join().fileName.equals(savedGame.fileName));
             this.saveList.removeEntry(this.saveList.getSelected());
           } catch(final IOException e) {
             LOGGER.error("Failed to delete save", e);

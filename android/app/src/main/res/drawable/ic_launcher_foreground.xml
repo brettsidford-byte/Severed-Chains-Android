@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/black" />
+    <!-- Adaptive icons use a 108 dp viewport. Keep the supplied circular art
+         inside the central safe region used by circular and squircle masks. -->
+    <item
+        android:left="18dp"
+        android:top="18dp"
+        android:right="18dp"
+        android:bottom="18dp">
+        <bitmap
+            android:antialias="true"
+            android:filter="true"
+            android:gravity="fill"
+            android:src="@drawable/dragoon_icon_art" />
+    </item>
+</layer-list>

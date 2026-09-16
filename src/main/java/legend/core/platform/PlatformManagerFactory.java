@@ -9,7 +9,7 @@ import java.util.function.Supplier;
  * its implementation before GameEngine is initialised.
  */
 public final class PlatformManagerFactory {
-  private static Supplier<PlatformManager> factory = SdlPlatformManager::new;
+  private static Supplier<PlatformManager> factory = PlatformManagerFactory::createDesktop;
 
   private PlatformManagerFactory() {
   }
@@ -20,5 +20,14 @@ public final class PlatformManagerFactory {
 
   public static PlatformManager create() {
     return factory.get();
+  }
+
+  private static PlatformManager createDesktop() {
+    try {
+      return (PlatformManager)Class.forName("legend.core.platform.SdlPlatformManager")
+        .getConstructor().newInstance();
+    } catch(final ReflectiveOperationException e) {
+      throw new IllegalStateException("Desktop platform manager is unavailable", e);
+    }
   }
 }

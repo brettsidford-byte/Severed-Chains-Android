@@ -14,7 +14,7 @@ import legend.game.inventory.screens.FontOptions;
 import legend.game.inventory.screens.InputPropagation;
 import legend.game.modding.coremod.CoreMod;
 import legend.game.saves.SeveredSavedGame;
-import org.lwjgl.BufferUtils;
+import legend.core.DirectBuffers;
 
 import java.nio.ByteBuffer;
 
@@ -45,7 +45,7 @@ public class SeveredSaveCard extends BlankSaveCard {
   public SeveredSaveCard(final SeveredSavedGame savedGame) {
     this.savedGame = savedGame;
 
-    final ByteBuffer buffer = BufferUtils.createByteBuffer(savedGame.atlas.size());
+    final ByteBuffer buffer = DirectBuffers.bytes(savedGame.atlas.size());
     savedGame.atlas.read(0, buffer, 0, savedGame.atlas.size());
     this.texture = Texture.png("Save card " + savedGame.saveName + " (" + savedGame.fileName + ')', buffer);
 

@@ -1,23 +1,26 @@
 #version 330 core
 
-in GS_OUT {
-  smooth vec2 vertUv;
-  flat vec2 vertTpage;
-  flat vec2 vertClut;
-  flat int vertBpp;
-  smooth vec4 vertColour;
-  flat int vertFlags;
+in vec2 tmdUv;
+flat in float tmdControlA;
+flat in float tmdControlB;
+in vec4 tmdColour;
+in vec2 tmdDepth;
 
-  flat int translucency;
-
-  flat float widthMultiplier;
-  flat int widthMask;
-  flat int indexShift;
-  flat int indexMask;
-
-  smooth float depth;
-  smooth float depthOffset;
-};
+#define controlA int(tmdControlA)
+#define controlB int(tmdControlB)
+#define vertUv tmdUv
+#define vertTpage vec2(float(controlA >> 12 & 0xf) * 64.0, float(controlA >> 16 & 0x1) * 256.0)
+#define vertClut vec2(float(controlB & 0x3f) * 16.0, float(controlB >> 6 & 0x1ff))
+#define vertBpp (controlA >> 8 & 3)
+#define vertColour tmdColour
+#define vertFlags (controlA & 0xff)
+#define translucency (controlA >> 10 & 3)
+#define widthMultiplier (1.0 / float(1 << (2 - vertBpp)))
+#define widthMask ((1 << (2 - vertBpp)) - 1)
+#define indexShift (vertBpp + 2)
+#define indexMask ((1 << ((vertBpp + 1) * 4)) - 1)
+#define depth tmdDepth.x
+#define depthOffset tmdDepth.y
 
 layout(std140) uniform projectionInfo {
   float znear;

@@ -24,6 +24,11 @@ public final class GamePaths {
     return path;
   }
 
+  /** Resolves legacy desktop-relative game paths against the configured runtime root. */
+  public static Path resolve(final Path path) {
+    return path.isAbsolute() ? path : root.resolve(path).normalize();
+  }
+
   public static Path configFile() {
     return resolve("config.conf");
   }

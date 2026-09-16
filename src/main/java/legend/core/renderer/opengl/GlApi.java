@@ -8,21 +8,16 @@ import legend.core.renderer.DepthComparator;
 import legend.core.renderer.FrameBuffer;
 import legend.core.renderer.FrameBufferAttachment;
 import legend.core.renderer.Mesh;
-import legend.core.renderer.QueuedModel;
 import legend.core.renderer.RenderApi;
-import legend.core.renderer.RenderBatch;
 import legend.core.renderer.Shader;
 import legend.core.renderer.ShaderOptions;
 import legend.core.renderer.ShaderUniformBuffer;
-import legend.core.renderer.SubmapWidescreenMode;
 import legend.core.renderer.Texture;
 import legend.core.renderer.TextureDataFormat;
 import legend.core.renderer.TextureDataType;
 import legend.core.renderer.TextureInternalFormat;
 import legend.core.renderer.Translucency;
 import legend.core.renderer.VertexOrder;
-import legend.game.EngineState;
-import legend.game.modding.coremod.CoreMod;
 import legend.game.ui.GameOverlay;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -39,7 +34,6 @@ import java.nio.file.Path;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static legend.core.GameEngine.CONFIG;
 import static org.lwjgl.opengl.GL11C.GL_ALWAYS;
 import static org.lwjgl.opengl.GL11C.GL_BLEND;
 import static org.lwjgl.opengl.GL11C.GL_COLOR_BUFFER_BIT;
@@ -109,8 +103,12 @@ public class GlApi implements RenderApi {
 
   private boolean backfaceCulling;
 
-  private RenderBatch batch;
   private boolean widescreen;
+  private boolean forced4By3;
+  private float nativeWidth;
+  private float nativeHeight;
+  private float expectedWidth;
+  private float widescreenOrthoOffsetX;
   private float w;
   private float h;
   private int renderWidth;
@@ -299,11 +297,17 @@ public class GlApi implements RenderApi {
   }
 
   @Override
-  public void initBatch(final RenderBatch batch) {
-    this.batch = batch;
-    this.widescreen = batch.getRenderMode() == EngineState.RenderMode.PERSPECTIVE && CoreMod.ALLOW_WIDESCREEN_CONFIG.isValid() && CONFIG.getConfig(CoreMod.ALLOW_WIDESCREEN_CONFIG.get()) || batch.getRenderMode() == EngineState.RenderMode.LEGACY && CoreMod.LEGACY_WIDESCREEN_MODE_CONFIG.isValid() && CONFIG.getConfig(CoreMod.LEGACY_WIDESCREEN_MODE_CONFIG.get()) == SubmapWidescreenMode.EXPANDED;
-    this.w = (float)this.renderWidth / batch.nativeWidth;
-    this.h = (float)this.renderHeight / batch.nativeHeight;
+  public void initBatch(final boolean widescreen, final boolean forced4By3,
+                        final float nativeWidth, final float nativeHeight,
+                        final float expectedWidth, final float widescreenOrthoOffsetX) {
+    this.widescreen = widescreen;
+    this.forced4By3 = forced4By3;
+    this.nativeWidth = nativeWidth;
+    this.nativeHeight = nativeHeight;
+    this.expectedWidth = expectedWidth;
+    this.widescreenOrthoOffsetX = widescreenOrthoOffsetX;
+    this.w = this.renderWidth / nativeWidth;
+    this.h = this.renderHeight / nativeHeight;
 
     this.backfaceCulling(false);
   }
@@ -354,26 +358,25 @@ public class GlApi implements RenderApi {
   }
 
   @Override
-  public void scissor(final QueuedModel<?, ?> model, final FloatBuffer scissorBuffer, final ShaderUniformBuffer scissorUniform) {
-    final Rect4i worldScissor = model.worldScissor();
-    final Rect4i modelScissor = model.modelScissor();
-
+  public void scissor(final Rect4i worldScissor, final Rect4i modelScissor,
+                      final FloatBuffer scissorBuffer,
+                      final ShaderUniformBuffer scissorUniform) {
     this.tempScissorRect.set(worldScissor.x, this.renderHeight - (worldScissor.y + worldScissor.h), worldScissor.w, worldScissor.h);
 
     if(modelScissor.w != 0 || modelScissor.h != 0) {
       if(this.widescreen) {
-        this.tempScissorRect.subregion(Math.round((modelScissor.x + this.batch.widescreenOrthoOffsetX) * this.h * ((float)this.batch.expectedWidth / this.batch.nativeWidth)), this.renderHeight - Math.round((modelScissor.y + modelScissor.h) * this.h), Math.round(modelScissor.w * this.h * ((float)this.batch.expectedWidth / this.batch.nativeWidth)), Math.round(modelScissor.h * this.h));
+        this.tempScissorRect.subregion(Math.round((modelScissor.x + this.widescreenOrthoOffsetX) * this.h * (this.expectedWidth / this.nativeWidth)), this.renderHeight - Math.round((modelScissor.y + modelScissor.h) * this.h), Math.round(modelScissor.w * this.h * (this.expectedWidth / this.nativeWidth)), Math.round(modelScissor.h * this.h));
       } else {
         final float offset;
         final float w;
 
-        if(this.batch.getRenderMode() == EngineState.RenderMode.LEGACY && CONFIG.getConfig(CoreMod.LEGACY_WIDESCREEN_MODE_CONFIG.get()) == SubmapWidescreenMode.FORCED_4_3) {
+        if(this.forced4By3) {
           final float ratio = (float)this.renderWidth / this.renderHeight;
-          final float adjustedW = this.batch.nativeHeight * ratio;
-          offset = (adjustedW - this.batch.nativeWidth) / 2.0f;
+          final float adjustedW = this.nativeHeight * ratio;
+          offset = (adjustedW - this.nativeWidth) / 2.0f;
           w = this.h;
         } else {
-          offset = this.batch.widescreenOrthoOffsetX;
+          offset = this.widescreenOrthoOffsetX;
           w = this.w;
         }
 
@@ -397,25 +400,25 @@ public class GlApi implements RenderApi {
         glDisable(GL_BLEND);
       }
 
-      switch(translucency) {
-        case HALF_B_PLUS_HALF_F -> {
-          glBlendEquation(GL_FUNC_ADD);
-          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      if(translucency != null) {
+        switch(translucency) {
+          case HALF_B_PLUS_HALF_F -> {
+            glBlendEquation(GL_FUNC_ADD);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+          }
+
+          case B_PLUS_F -> {
+            glBlendEquation(GL_FUNC_ADD);
+            glBlendFunc(GL_ONE, GL_ONE);
+          }
+
+          case B_MINUS_F -> {
+            glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+            glBlendFunc(GL_ONE, GL_ONE);
+          }
+
+          default -> throw new RuntimeException(translucency + " not yet supported");
         }
-
-        case B_PLUS_F -> {
-          glBlendEquation(GL_FUNC_ADD);
-          glBlendFunc(GL_ONE, GL_ONE);
-        }
-
-        case B_MINUS_F -> {
-          glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
-          glBlendFunc(GL_ONE, GL_ONE);
-        }
-
-        case null -> { }
-
-        default -> throw new RuntimeException(translucency + " not yet supported");
       }
 
       this.translucency = translucency;

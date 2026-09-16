@@ -1,5 +1,7 @@
 package legend.lodmod;
 
+import legend.core.GamePaths;
+
 import legend.core.gpu.Rect4i;
 import legend.core.gpu.VramTextureLoader;
 import legend.core.gpu.VramTextureSingle;
@@ -82,12 +84,12 @@ import legend.game.textures.RegisterAtlasTexturesEvent;
 import legend.game.tim.Tim;
 import legend.game.unpacker.FileData;
 import legend.game.unpacker.Loader;
+import legend.core.DirectBuffers;
 import org.legendofdragoon.modloader.Mod;
 import org.legendofdragoon.modloader.events.EventListener;
 import org.legendofdragoon.modloader.registries.Registrar;
 import org.legendofdragoon.modloader.registries.RegistryDelegate;
 import org.legendofdragoon.modloader.registries.RegistryId;
-import org.lwjgl.system.MemoryStack;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -106,7 +108,6 @@ import static legend.game.SItem.submapNames_8011c108;
 import static legend.game.SItem.worldMapNames_8011c1ec;
 import static legend.game.Scus94491BpeSegment_8006.battleState_8006e398;
 import static legend.game.Scus94491BpeSegment_800b.encounter;
-import static org.lwjgl.system.MemoryStack.stackPush;
 
 /** Will eventually contain standard LOD content. Will be able to be disabled for total overhaul mods. */
 @Mod(id = LodMod.MOD_ID, version = "^3.0.0")
@@ -885,8 +886,8 @@ public class LodMod {
     final VramTextureSingle tex = VramTextureLoader.textureFromTim(tim0);
     final VramTextureSingle[] cluts = VramTextureLoader.palettesFromTim(tim5);
 
-    try(final MemoryStack stack = stackPush()) {
-      final ByteBuffer buffer = stack.malloc(16 * 48 * 4);
+    {
+      final ByteBuffer buffer = DirectBuffers.bytes(16 * 48 * 4);
       buffer.order(ByteOrder.LITTLE_ENDIAN);
       final IntBuffer intBuffer = buffer.asIntBuffer();
 
@@ -913,7 +914,7 @@ public class LodMod {
 
     GoodsIcon.clear();
 
-    try(final Stream<Path> stream = Files.list(Path.of("gfx/goods"))) {
+    try(final Stream<Path> stream = Files.list(GamePaths.resolve(Path.of("gfx/goods")))) {
       stream
         .filter(file -> file.toString().endsWith(".png"))
         .forEach(file -> {

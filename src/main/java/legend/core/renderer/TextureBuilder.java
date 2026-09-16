@@ -1,24 +1,19 @@
 package legend.core.renderer;
 
-import org.lwjgl.system.MemoryStack;
-
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-import static legend.core.GameEngine.RENDERER;
 import static legend.core.IoHelper.pathToByteBuffer;
-import static org.lwjgl.stb.STBImage.stbi_failure_reason;
-import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
-import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.memFree;
 
 public class TextureBuilder {
+  private static TexturePngDecoder pngDecoder;
+
   private final String name;
 
   @Nullable
@@ -42,6 +37,23 @@ public class TextureBuilder {
     this.name = name;
   }
 
+  public static void setPngDecoder(final TexturePngDecoder pngDecoder) {
+    TextureBuilder.pngDecoder = Objects.requireNonNull(pngDecoder);
+  }
+
+  public static TexturePngDecoder.DecodedTexture decodePng(final Path path) {
+    try {
+      return decodePng(pathToByteBuffer(path));
+    } catch(final IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static TexturePngDecoder.DecodedTexture decodePng(final ByteBuffer encodedImage) {
+    if(pngDecoder == null) throw new IllegalStateException("Texture PNG decoder is not installed");
+    return pngDecoder.decode(encodedImage);
+  }
+
   public void free() {
     for(final Runnable runnable : this.cleanup) {
       runnable.run();
@@ -60,20 +72,9 @@ public class TextureBuilder {
   }
 
   public void png(final ByteBuffer imageBuffer) {
-    try(final MemoryStack stack = stackPush()) {
-      final IntBuffer w = stack.mallocInt(1);
-      final IntBuffer h = stack.mallocInt(1);
-      final IntBuffer comp = stack.mallocInt(1);
-
-      final ByteBuffer data = stbi_load_from_memory(imageBuffer, w, h, comp, 4);
-      if(data == null) {
-        throw new RuntimeException("Failed to load image: " + stbi_failure_reason());
-      }
-
-      this.data(data, w.get(0), h.get(0));
-
-      this.cleanup.add(() -> memFree(data));
-    }
+    final TexturePngDecoder.DecodedTexture decoded = decodePng(imageBuffer);
+    this.data(decoded.data(), decoded.width(), decoded.height());
+    this.cleanup.add(decoded::close);
   }
 
   public void size(final int w, final int h) {
@@ -115,6 +116,8 @@ public class TextureBuilder {
   }
 
   Texture build() {
-    return RENDERER.api().makeTexture(this.buffer, this.name, this.w, this.h, this.internalFormat, this.dataFormat, this.dataType, this.minFilter, this.magFilter, this.wrapS, this.wrapT);
+    return RendererResourceFactory.makeTexture(this.buffer, this.name, this.w, this.h,
+      this.internalFormat, this.dataFormat, this.dataType, this.minFilter, this.magFilter,
+      this.wrapS, this.wrapT);
   }
 }

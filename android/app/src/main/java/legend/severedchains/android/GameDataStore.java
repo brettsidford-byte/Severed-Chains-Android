@@ -53,6 +53,10 @@ public final class GameDataStore {
         return listedFiles().size();
     }
 
+    public boolean hasCompleteDiscSet() {
+        return GameDataInspector.hasCompleteDiscSet(listedFiles());
+    }
+
     public List<File> importDocuments(final Intent result) throws IOException {
         final List<File> imported = new ArrayList<>();
         final File directory = paths.isos();

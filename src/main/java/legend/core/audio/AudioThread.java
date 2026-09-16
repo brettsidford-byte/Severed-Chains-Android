@@ -10,14 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
-import org.lwjgl.openal.AL;
-import org.lwjgl.openal.ALC;
-import org.lwjgl.openal.ALCCapabilities;
-import org.lwjgl.openal.ALCapabilities;
-import org.lwjgl.openal.ALUtil;
-import org.lwjgl.system.MemoryUtil;
-
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -25,27 +17,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static legend.core.GameEngine.CONFIG;
-import static org.lwjgl.openal.ALC10.ALC_DEVICE_SPECIFIER;
-import static org.lwjgl.openal.ALC10.alcCloseDevice;
-import static org.lwjgl.openal.ALC10.alcCreateContext;
-import static org.lwjgl.openal.ALC10.alcDestroyContext;
-import static org.lwjgl.openal.ALC10.alcGetError;
-import static org.lwjgl.openal.ALC10.alcGetIntegerv;
-import static org.lwjgl.openal.ALC10.alcGetString;
-import static org.lwjgl.openal.ALC10.alcMakeContextCurrent;
-import static org.lwjgl.openal.ALC10.alcOpenDevice;
-import static org.lwjgl.openal.ALC11.ALC_ALL_DEVICES_SPECIFIER;
-import static org.lwjgl.openal.ALC11.ALC_DEFAULT_ALL_DEVICES_SPECIFIER;
-import static org.lwjgl.openal.EXTDisconnect.ALC_CONNECTED;
-import static org.lwjgl.system.MemoryUtil.memFree;
-
 public final class AudioThread implements Runnable {
   private static final Logger LOGGER = LogManager.getFormatterLogger(AudioThread.class);
   private static final Marker AUDIO_THREAD_MARKER = MarkerManager.getMarker("AUDIO_THREAD");
 
   private final int nanosPerTick;
-  private long audioContext;
-  private long audioDevice;
+  private AudioBackend backend;
+  private boolean backendReady;
   private final boolean stereo;
   private final int voiceCount;
   private InterpolationPrecision interpolationPrecision;
@@ -59,21 +37,15 @@ public final class AudioThread implements Runnable {
   private boolean running;
   private boolean paused;
 
-  private ALCapabilities alCapabilities;
-  private ALCCapabilities alcCapabilities;
-
-  private IntBuffer tmp;
-
   private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-  private String defaultDevice;
   private volatile boolean deviceChanged;
 
   public static List<String> getDevices() {
-    if(ALC.getCapabilities().ALC_ENUMERATE_ALL_EXT) {
-      return ALUtil.getStringList(0, ALC_ALL_DEVICES_SPECIFIER);
+    try {
+      return AudioBackends.current().devices();
+    } catch(final IllegalStateException ignored) {
+      return List.of();
     }
-
-    return ALUtil.getStringList(0, ALC_DEVICE_SPECIFIER);
   }
 
   public AudioThread(final boolean stereo, final int voiceCount, final InterpolationPrecision bitDepth, final PitchResolution pitchResolution, final EffectsOverTimeGranularity granularity) {
@@ -89,21 +61,11 @@ public final class AudioThread implements Runnable {
     this.initInternal();
     this.addDefaultSources();
 
-    this.defaultDevice = alcGetString(0, ALC_DEFAULT_ALL_DEVICES_SPECIFIER);
-
     // Poll for default device change
     this.scheduler.scheduleAtFixedRate(() -> {
-      alcGetString(0, ALC_ALL_DEVICES_SPECIFIER); // refresh the list
-
-      final String currentDefault = alcGetString(0, ALC_DEFAULT_ALL_DEVICES_SPECIFIER);
-      final boolean defaultDeviceChanged = currentDefault != null && !currentDefault.equals(this.defaultDevice);
+      final boolean defaultDeviceChanged = this.backend != null && this.backend.defaultDeviceChanged();
 
       synchronized(this) {
-        if(defaultDeviceChanged) {
-          LOGGER.info("Found new default device %s", currentDefault);
-          this.defaultDevice = currentDefault;
-        }
-
         if(defaultDeviceChanged || this.paused) {
           this.deviceChanged = true;
           this.notify();
@@ -128,7 +90,7 @@ public final class AudioThread implements Runnable {
         final AudioSource source = this.sources.get(i);
 
         synchronized(source) {
-          if(this.audioDevice != 0) {
+          if(this.backendReady) {
             source.init();
           }
 
@@ -146,40 +108,17 @@ public final class AudioThread implements Runnable {
   }
 
   private void initInternal() {
-    this.openDevice();
-
-    if(this.audioDevice != 0) {
-      this.tmp = MemoryUtil.memAllocInt(1);
-
-      final int[] attributes = {0};
-      this.audioContext = alcCreateContext(this.audioDevice, attributes);
-
-      if(this.audioContext == 0) {
-        LOGGER.error("Failed to create audio context: %#x", alcGetError(this.audioDevice));
-        this.destroyInternal();
-        this.paused = true;
-        return;
+    this.backend = AudioBackends.create();
+    final String requested = CONFIG.getConfig(CoreMod.AUDIO_DEVICE_CONFIG.get());
+    this.backendReady = this.backend.init(requested);
+    if(this.backendReady) {
+      synchronized(this) {
+        this.paused = false;
+        this.notify();
       }
-
-      alcMakeContextCurrent(this.audioContext);
-      LOGGER.info(AUDIO_THREAD_MARKER, "Created audio context %#x", this.audioContext);
-
-      this.alcCapabilities = ALC.createCapabilities(this.audioDevice);
-      this.alCapabilities = AL.createCapabilities(this.alcCapabilities);
-
-      if(this.alCapabilities.OpenAL10) {
-        synchronized(this) {
-          this.paused = false;
-          this.notify();
-        }
-
-        return;
-      }
-    } else {
-      this.audioContext = 0;
+      return;
     }
-
-    LOGGER.warn("Device does not support OpenAL10. Retrying audio initialization.");
+    LOGGER.warn("Audio backend initialization failed. Retrying audio initialization.");
     this.destroyInternal();
     this.paused = true;
   }
@@ -190,7 +129,7 @@ public final class AudioThread implements Runnable {
     synchronized(this) {
       this.pendingXa = null;
 
-      if(!this.running && this.audioDevice != 0) {
+      if(!this.running && this.backendReady) {
         this.destroyInternal();
         this.xaPlayer.unloadOpusFile();
         return;
@@ -201,7 +140,7 @@ public final class AudioThread implements Runnable {
       this.notify();
     }
 
-    while(this.audioDevice != 0) {
+    while(this.backendReady) {
       DebugHelper.sleep(1);
     }
   }
@@ -215,36 +154,11 @@ public final class AudioThread implements Runnable {
       }
     }
 
-    if(this.audioContext != 0) {
-      alcDestroyContext(this.audioContext);
-      this.audioContext = 0;
+    if(this.backend != null) {
+      this.backend.destroy();
+      this.backend = null;
     }
-
-    if(this.audioDevice != 0) {
-      alcCloseDevice(this.audioDevice);
-      this.audioDevice = 0;
-
-      memFree(this.tmp);
-    }
-  }
-
-  private void openDevice() {
-    final String currentDevice = CONFIG.getConfig(CoreMod.AUDIO_DEVICE_CONFIG.get());
-    final List<String> devices = getDevices();
-
-    if(devices.contains(currentDevice)) {
-      LOGGER.info(AUDIO_THREAD_MARKER, "Using selected audio device %s", currentDevice);
-      this.audioDevice = alcOpenDevice(currentDevice);
-    } else if(this.defaultDevice != null) {
-      LOGGER.info(AUDIO_THREAD_MARKER, "Using default audio device %s", this.defaultDevice);
-      this.audioDevice = alcOpenDevice(this.defaultDevice);
-    } else if(!devices.isEmpty()) {
-      LOGGER.info(AUDIO_THREAD_MARKER, "Using first audio device %s", devices.getFirst());
-      this.audioDevice = alcOpenDevice(devices.getFirst());
-    } else {
-      LOGGER.info(AUDIO_THREAD_MARKER, "No audio devices found");
-      this.audioDevice = 0;
-    }
+    this.backendReady = false;
   }
 
   private void addDefaultSources() {
@@ -257,7 +171,7 @@ public final class AudioThread implements Runnable {
       this.sources.add(source);
 
       synchronized(source) {
-        if(this.audioDevice != 0) {
+        if(this.backendReady) {
           source.init();
         }
       }
@@ -318,18 +232,13 @@ public final class AudioThread implements Runnable {
           }
         }
 
-        if(this.alcCapabilities.ALC_EXT_disconnect) {
-          alcGetIntegerv(this.audioDevice, ALC_CONNECTED, this.tmp);
-          final int connected = this.tmp.get(0);
-
-          if(connected == 0) {
+        if(this.backend != null && !this.backend.isConnected()) {
             LOGGER.warn("Audio device lost");
             this.reinit();
 
             if(this.paused) {
               continue;
             }
-          }
         }
 
         for(int i = 0; i < this.sources.size(); i++) {

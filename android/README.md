@@ -35,8 +35,44 @@ app/build/outputs/apk/debug/app-debug.apk
 
 GitHub Actions runs the same build and uploads `severed-chains-android-debug`
 as a workflow artifact. Debug APKs use a debug signing identity. A public
-release needs a deliberately managed release-signing key; no private signing
-material belongs in this repository.
+release uses the manually triggered `Android signed release APK` workflow.
+
+## Signed release
+
+Generate the permanent release key locally. Do not commit it or send it through
+chat or email:
+
+```text
+keytool -genkeypair -v -keystore severed-chains-release.jks -alias severed-chains -keyalg RSA -keysize 4096 -validity 10000
+```
+
+Keep secure offline backups of the keystore, alias, and passwords. Every update
+to the release application must be signed by this same key.
+
+Convert the keystore to a single-line Base64 value in PowerShell:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("severed-chains-release.jks")) | Set-Clipboard
+```
+
+Create these repository secrets under **Settings > Secrets and variables >
+Actions**:
+
+- `ANDROID_KEYSTORE_BASE64`: the Base64 value copied above;
+- `ANDROID_KEYSTORE_PASSWORD`: the keystore password;
+- `ANDROID_KEY_ALIAS`: `severed-chains` (or the alias chosen at creation);
+- `ANDROID_KEY_PASSWORD`: the private-key password.
+
+Run **Actions > Android signed release APK > Run workflow** on the
+`android-port` branch. The workflow reconstructs the keystore only inside the
+temporary runner, builds `:app:assembleRelease`, verifies the signature, and
+uploads `severed-chains-android-release`. The keystore directory is ignored by
+Git and the temporary runner copy is removed even if the build fails.
+
+Release builds use package `legend.severedchains.android`; debug builds use
+`legend.severedchains.android.debug`. Android treats them as separate apps, so
+the first release installation does not automatically inherit debug saves or
+imported disc data.
 
 ## Install and first start
 

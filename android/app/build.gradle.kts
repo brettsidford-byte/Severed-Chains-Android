@@ -42,6 +42,30 @@ val copySharedShaderAssets = tasks.register("copySharedShaderAssets") {
     }
 }
 
+val releaseKeystorePath = providers.environmentVariable("ANDROID_KEYSTORE_PATH").orNull
+val releaseKeystorePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull
+val releaseBuildRequested = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true)
+}
+val releaseSigningValues = mapOf(
+    "ANDROID_KEYSTORE_PATH" to releaseKeystorePath,
+    "ANDROID_KEYSTORE_PASSWORD" to releaseKeystorePassword,
+    "ANDROID_KEY_ALIAS" to releaseKeyAlias,
+    "ANDROID_KEY_PASSWORD" to releaseKeyPassword,
+)
+val missingReleaseSigningValues = releaseSigningValues
+    .filterValues { it.isNullOrBlank() }
+    .keys
+
+if (releaseBuildRequested && missingReleaseSigningValues.isNotEmpty()) {
+    throw GradleException(
+        "Release signing is not configured. Set: ${missingReleaseSigningValues.joinToString()}",
+    )
+}
+val releaseSigningConfigured = missingReleaseSigningValues.isEmpty()
+
 android {
     namespace = "legend.severedchains.android"
     compileSdk = 35
@@ -58,10 +82,30 @@ android {
         }
     }
 
+    signingConfigs {
+        if (releaseSigningConfigured) {
+            create("release") {
+                storeFile = file(releaseKeystorePath!!)
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+        }
+        release {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
+            isDebuggable = false
+            // Keep the first signed build behaviourally identical to the tested
+            // debug build. Reflection-heavy engine/mod code needs explicit R8
+            // rules before shrinking can be enabled safely.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 

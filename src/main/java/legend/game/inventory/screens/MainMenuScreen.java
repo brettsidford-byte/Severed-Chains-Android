@@ -403,7 +403,6 @@ public class MainMenuScreen extends MenuScreen {
     switch(this.loadingStage) {
       case 0 -> {
         this.refreshCharacterCards();
-        startFadeEffect(2, 10);
         this.loadingStage++;
       }
 

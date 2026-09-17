@@ -7,7 +7,7 @@ renderer, audio, storage, image-codec, and platform backends.
 
 ## Status and target
 
-Version 0.9.2 is a playable ARM64 release build validated on an Anbernic RG405V.
+Version 0.9.3 is a playable ARM64 release build validated on an Anbernic RG405V.
 It requires:
 
 - Android 8.0/API 26 or newer;

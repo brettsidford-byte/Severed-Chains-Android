@@ -31,7 +31,7 @@ public class MessageBoxScreen extends MenuScreen {
   private boolean allowWrapY = true;
 
   public MessageBoxScreen(final String text, final MessageBoxType type, final Consumer<MessageBoxResult> onResult) {
-    this(text, new I18nText("lod_core.ui.message_box.yes"), new I18nText("lod_core.ui.message_box.no"), type, true, onResult);
+    this(text, new I18nText("lod_core.ui.message_box.yes"), new I18nText("lod_core.ui.message_box.no"), type, false, onResult);
   }
 
   public MessageBoxScreen(final String text, final MessageBoxType type, final boolean animateTransitions, final Consumer<MessageBoxResult> onResult) {
@@ -39,7 +39,7 @@ public class MessageBoxScreen extends MenuScreen {
   }
 
   public MessageBoxScreen(final String text, final TextComponent yes, final TextComponent no, final MessageBoxType type, final Consumer<MessageBoxResult> onResult) {
-    this(text, yes, no, type, true, onResult);
+    this(text, yes, no, type, false, onResult);
   }
 
   private MessageBoxScreen(final String text, final TextComponent yes, final TextComponent no, final MessageBoxType type, final boolean animateTransitions, final Consumer<MessageBoxResult> onResult) {
@@ -61,8 +61,8 @@ public class MessageBoxScreen extends MenuScreen {
 
     if(!this.animateTransitions) {
       if(this.messageBox.state_0c == 2) {
-        // Skip the eight-frame PS1 box-opening animation. The quit prompt is
-        // still fully drawn, but it is ready for input on the first frame.
+        // Skip the eight-frame PS1 box-opening animation. The prompt is still
+        // fully drawn, but it is ready for input on the first frame.
         this.messageBox.backgroundRenderable_08.glyph_04 = 142;
         this.messageBox.backgroundRenderable_08.startGlyph_10 = 142;
         this.messageBox.backgroundRenderable_08.endGlyph_14 = 142;

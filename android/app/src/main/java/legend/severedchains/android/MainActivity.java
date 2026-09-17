@@ -30,7 +30,7 @@ import legend.game.textures.PngWriter;
 
 public final class MainActivity extends Activity {
     private static final String TAG = "SeveredChains";
-    private static final String BUILD_LABEL = "Severed Chains Android 0.9.0";
+    private static final String BUILD_LABEL = "Severed Chains Android 0.9.2";
     private static final int SELECT_GAME_DATA = 1001;
 
     private GameDataStore gameDataStore;
